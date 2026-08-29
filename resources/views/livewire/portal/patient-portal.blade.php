@@ -63,7 +63,31 @@
                                 {{ $ordonnance->created_at->format('d/m/Y') }}
                                 — {{ $ordonnance->doctor?->name() }}
                             </p>
-                            <p class="referrals__result">{{ $ordonnance->content }}</p>
+
+                            @php($lignes = $ordonnance->lines())
+
+                            @if ($lignes === [])
+                                {{-- Contenu non decoupable : on le rend tel quel, en
+                                     preservant les retours a la ligne du praticien. --}}
+                                <p class="referrals__result prescription__brut">{{ $ordonnance->content }}</p>
+                            @else
+                                <ol class="prescription">
+                                    @foreach ($lignes as $ligne)
+                                        <li class="prescription__ligne">
+                                            <span class="prescription__medicament">{{ $ligne['medicament'] }}</span>
+                                            @foreach ($ligne['precisions'] as $precision)
+                                                <span class="prescription__precision">{{ $precision }}</span>
+                                            @endforeach
+                                        </li>
+                                    @endforeach
+                                </ol>
+                            @endif
+
+                            <a href="{{ route('portal.prescription.pdf', [$patient->portal_token, $ordonnance]) }}"
+                               class="attachments__link prescription__telechargement">
+                                Telecharger l'ordonnance
+                                <span class="attachments__size">PDF</span>
+                            </a>
                         </li>
                     @endforeach
                 </ul>

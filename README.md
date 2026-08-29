@@ -331,6 +331,43 @@ SMSGATE_COUNTRY_CODE=223
 - `SMSGATE_ENABLED=false` désactive complètement les envois (formation,
   recette). Les tests tournent toujours avec les SMS désactivés.
 
+### Quand le serveur n'est pas sur le réseau du téléphone
+
+Sur un serveur distant (VPS), le téléphone n'est pas joignable par son adresse
+locale. Trois topologies, par ordre de simplicité :
+
+| Topologie | `SMSGATE_URL` | Prérequis |
+|---|---|---|
+| Même réseau local | `http://<ip-locale>:8080` | Aucun |
+| Tunnel VPN (WireGuard) | `http://<ip-vpn-du-telephone>:8080` | Tunnel déjà monté |
+| Relais cloud SMSGate | l'URL de l'API cloud | Compte chez le relais |
+
+Le code n'a pas à changer d'une topologie à l'autre : seule `SMSGATE_URL`
+diffère, et `https://` est accepté tel quel.
+
+> **Optimisation de batterie Android — indispensable.** Une fois SMSGate en
+> arrière-plan, Android gèle l'application : la connexion TCP s'établit encore
+> (le noyau répond), mais plus aucune requête n'est traitée, et l'envoi échoue
+> au bout de `SMSGATE_TIMEOUT`. Symptôme caractéristique : la passerelle répond
+> instantanément quand l'application est à l'écran, et reste muette sinon ;
+> les SMS arrivent alors groupés et en retard, au réveil du téléphone.
+> Il faut exclure SMSGate de l'optimisation de batterie, l'ajouter à
+> l'autostart sur les surcouches constructeur (Xiaomi, Oppo, Samsung, Huawei),
+> et garder le téléphone branché sur secteur.
+
+**Diagnostic rapide** — depuis le serveur, sans envoyer de SMS :
+
+```bash
+curl -s -o /dev/null -m 8 -w '%{http_code}\n' http://<ip>:8080/message
+# 401 : la passerelle répond et exige l'authentification — c'est bon signe
+# 000 en ~8 s : téléphone endormi ou injoignable
+# 000 immédiat : rien n'écoute sur ce port
+```
+
+Un `401` suivi d'un `200` avec les identifiants prouve la connectivité ; il ne
+prouve pas la remise du SMS. Seule la réception sur un vrai téléphone, et
+l'onglet *Messages* de SMSGate, confirment l'acheminement.
+
 ## 7. Sauvegardes
 
 Les données vivent dans le volume Docker dédié **`keneya_db`**, distinct du
@@ -354,14 +391,27 @@ docker compose exec -T db mariadb-dump \
 ```
 
 Deux scripts prêts à l'emploi horodatent l'export et ne conservent que les 30
-dernières sauvegardes :
+dernières sauvegardes. `backup.sh` détecte lui-même la topologie : il passe par
+le conteneur `db` s'il tourne, et attaque sinon directement le serveur MariaDB
+indiqué par le `.env` — utile pour une installation native (section 4). Le mot
+de passe n'apparaît jamais dans `ps` (fichier temporaire en `600`), et un dump
+vide est signalé comme une erreur au lieu d'être conservé :
 
 ```bash
 ./scripts/backup.sh /var/sauvegardes/keneya                       # Linux
 powershell -File .\scripts\backup.ps1 -Destination D:\sauvegardes # Windows
 ```
 
-**Planification — Linux (cron), tous les jours à 22h00 :**
+**Installation de la tâche quotidienne, en une commande :**
+
+```bash
+./scripts/install-backup-cron.sh 02:30            # heure au choix
+crontab -l | grep keneya                          # vérification
+```
+
+Le script est idempotent : le relancer remplace la ligne existante.
+
+**Planification manuelle — Linux (cron), tous les jours à 22h00 :**
 
 ```cron
 0 22 * * * cd /var/www/keneya-workflow && ./scripts/backup.sh /var/sauvegardes/keneya >> /var/log/keneya-backup.log 2>&1
@@ -382,6 +432,33 @@ Restauration :
 docker compose exec -T db mariadb --user=keneya --password=<mot-de-passe> \
     keneya_workflow < keneya_workflow.sql
 ```
+
+### Réinitialiser un environnement de démonstration
+
+Un serveur de démonstration commerciale s'encombre au fil des présentations :
+patients fictifs, tickets, encaissements, pièces jointes, et parfois le nom
+d'un établissement saisi pour un prospect précédent. `demo:reset` remet cet
+environnement à un état propre :
+
+```bash
+php artisan demo:reset             # vide les données produites par l'usage
+php artisan demo:reset --complet   # vide aussi services, personnel et comptes
+php artisan demo:reset --force     # sans confirmation (usage non interactif)
+```
+
+La commande vide les tables transactionnelles (patients, passages, renvois,
+encaissements, ordonnances, rendez-vous, pièces jointes, journal d'audit),
+**supprime les fichiers joints sur le disque** — une pièce orpheline resterait
+lisible par qui connaît son chemin —, relance les seeders de démonstration puis
+rétablit explicitement le nom de l'établissement : `SettingSeeder` utilise
+`firstOrCreate` et ne corrigerait pas une valeur déjà présente.
+
+> **Elle n'est accessible qu'en ligne de commande.** Aucune route ne l'expose,
+> et elle refuse de s'exécuter hors console : un `Artisan::call()` déclenché
+> par une requête HTTP est rejeté. Un test vérifie qu'aucune route ne contient
+> `demo`. Elle n'a évidemment rien à faire sur l'installation réelle d'un
+> hôpital : c'est un outil d'environnement de démonstration, où toutes les
+> données sont fictives.
 
 ## 8. Modèle de données
 

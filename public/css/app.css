@@ -680,3 +680,27 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .timeline__actions { margin: .35rem 0 0; }
 
 .attachments li { display: flex; flex-wrap: wrap; gap: .3rem; align-items: center; }
+
+/* ---------- Ordonnance (portail patient) ---------- */
+
+.prescription { list-style: decimal inside; margin: .4rem 0; padding: 0; }
+
+.prescription__ligne {
+    display: flex; flex-wrap: wrap; gap: .4rem; align-items: baseline;
+    padding: .5rem .6rem; margin: .3rem 0;
+    background: var(--vert-clair); border-radius: var(--rayon);
+}
+
+.prescription__medicament { font-weight: 600; }
+
+.prescription__precision {
+    padding: .1rem .5rem;
+    background: var(--blanc); border-radius: var(--rayon);
+    font-size: .9rem; color: var(--gris-700);
+}
+
+/* Repli quand le texte libre ne se laisse pas decouper : les retours a la
+   ligne du praticien restent visibles au lieu d'etre aplatis par le HTML. */
+.prescription__brut { white-space: pre-wrap; }
+
+.prescription__telechargement { margin-top: .4rem; }

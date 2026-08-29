@@ -10,6 +10,7 @@ use App\Http\Controllers\CaisseController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Portal\PatientPortalController;
 use App\Http\Controllers\Portal\PortalDownloadController;
+use App\Http\Controllers\Portal\PortalPrescriptionPdfController;
 use App\Http\Controllers\Reception\PrintTicketController;
 use App\Http\Controllers\ReceptionController;
 use App\Http\Controllers\Service\AttachmentDownloadController as ServiceAttachmentDownloadController;
@@ -120,4 +121,7 @@ Route::middleware('throttle:10,1')->group(function () {
 
     Route::get('/mes-documents/{token}/piece-jointe/{attachment}', PortalDownloadController::class)
         ->name('portal.attachment');
+
+    Route::get('/mes-documents/{token}/ordonnance/{prescription}/pdf', PortalPrescriptionPdfController::class)
+        ->name('portal.prescription.pdf');
 });
