@@ -14,7 +14,7 @@ class HomeController extends Controller
 {
     public function __invoke(Request $request): RedirectResponse
     {
-        $home = $request->user()->homeRoute();
+        $home = $request->user()->homeUrl();
 
         if (! $home) {
             Auth::logout();
@@ -27,6 +27,6 @@ class HomeController extends Controller
             );
         }
 
-        return redirect()->route($home);
+        return redirect()->to($home);
     }
 }

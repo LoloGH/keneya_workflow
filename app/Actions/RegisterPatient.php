@@ -59,7 +59,7 @@ class RegisterPatient
 
             // La receptionniste choisit le service clinique, mais le patient
             // patiente d'abord a la caisse : on regle avant d'etre pris en charge.
-            [$file, $enAttente] = $this->routing->resolve(Service::findOrFail($data['service_id']));
+            [$file, $enAttente] = $this->routing->forRegistration(Service::findOrFail($data['service_id']));
 
             $visit = Visit::create([
                 'patient_id' => $patient->getKey(),

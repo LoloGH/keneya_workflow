@@ -41,6 +41,28 @@ final class Audit
 
     public const EVENT_SERVICE_DELETED = 'service_supprime';
 
+    public const EVENT_SERVICE_KIND_CREATED = 'type_service_cree';
+
+    public const EVENT_SERVICE_KIND_UPDATED = 'type_service_modifie';
+
+    public const EVENT_SERVICE_KIND_DELETED = 'type_service_supprime';
+
+    public const EVENT_STAFF_TYPE_CREATED = 'type_personnel_cree';
+
+    public const EVENT_STAFF_TYPE_UPDATED = 'type_personnel_modifie';
+
+    public const EVENT_STAFF_TYPE_DELETED = 'type_personnel_supprime';
+
+    public const EVENT_STAFF_MEMBER_CREATED = 'personnel_cree';
+
+    public const EVENT_PATIENT_ADMITTED = 'patient_hospitalise';
+
+    public const EVENT_PATIENT_DISCHARGED = 'sortie_hospitalisation';
+
+    public const EVENT_CARE_TASKS_PRESCRIBED = 'soins_prescrits';
+
+    public const EVENT_CARE_TASK_COMPLETED = 'soin_realise';
+
     public const EVENT_DOCTOR_CREATED = 'medecin_cree';
 
     public const EVENT_DOCTOR_REASSIGNED = 'medecin_reaffecte';
@@ -98,6 +120,17 @@ final class Audit
         self::EVENT_SERVICE_CREATED => 'Creation d\'un service',
         self::EVENT_SERVICE_UPDATED => 'Modification d\'un service',
         self::EVENT_SERVICE_DELETED => 'Suppression d\'un service',
+        self::EVENT_SERVICE_KIND_CREATED => 'Creation d\'un type de service',
+        self::EVENT_SERVICE_KIND_UPDATED => 'Modification d\'un type de service',
+        self::EVENT_SERVICE_KIND_DELETED => 'Suppression d\'un type de service',
+        self::EVENT_STAFF_TYPE_CREATED => 'Creation d\'un type de personnel',
+        self::EVENT_STAFF_TYPE_UPDATED => 'Modification d\'un type de personnel',
+        self::EVENT_STAFF_TYPE_DELETED => 'Suppression d\'un type de personnel',
+        self::EVENT_STAFF_MEMBER_CREATED => 'Creation d\'un membre du personnel',
+        self::EVENT_PATIENT_ADMITTED => 'Admission en hospitalisation',
+        self::EVENT_PATIENT_DISCHARGED => 'Sortie d\'hospitalisation',
+        self::EVENT_CARE_TASKS_PRESCRIBED => 'Prescription de soins',
+        self::EVENT_CARE_TASK_COMPLETED => 'Soin realise',
         self::EVENT_DOCTOR_CREATED => 'Creation d\'un medecin',
         self::EVENT_DOCTOR_REASSIGNED => 'Reaffectation d\'un medecin',
         self::EVENT_RECEPTIONIST_CREATED => 'Creation d\'une receptionniste',

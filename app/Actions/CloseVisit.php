@@ -4,6 +4,7 @@ namespace App\Actions;
 
 use App\Models\Doctor;
 use App\Models\PatientHistory;
+use App\Models\StaffMember;
 use App\Models\Visit;
 use App\Services\PatientHistoryRecorder;
 use App\Support\Audit;
@@ -21,7 +22,7 @@ class CloseVisit
 {
     public function __construct(private readonly PatientHistoryRecorder $history) {}
 
-    public function execute(Visit $visit, Doctor $doctor): Visit
+    public function execute(Visit $visit, Doctor|StaffMember $doctor): Visit
     {
         if ($visit->isClosed()) {
             throw new InvalidArgumentException('Ce dossier est deja cloture.');

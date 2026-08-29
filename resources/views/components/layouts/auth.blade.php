@@ -9,19 +9,23 @@
     <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
     <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
-    {{-- Visuel institutionnel remplacable sans toucher au code : il suffit de
-         deposer une autre image sous public/images/login-background.jpg. --}}
+    {{-- La scene est dessinee ; le visuel institutionnel ne sert plus que de
+         texture au fond, tres en retrait. Il reste remplacable sans toucher au
+         code : il suffit de deposer une autre image sous
+         public/images/login-background.jpg. --}}
     <style>
-        .login-screen {
+        .login-scene {
             background-image:
-                linear-gradient(rgba(10, 63, 97, .82), rgba(10, 63, 97, .82)),
+                linear-gradient(160deg, rgba(10, 63, 97, .94) 0%, rgba(7, 42, 65, .97) 100%),
                 url('{{ asset('images/login-background.jpg') }}');
         }
     </style>
     @livewireStyles
 </head>
-<body class="login-screen">
-    <div class="login-screen__inner">
+<body class="login-page">
+    <x-login-scene />
+
+    <div class="login-panel">
         {{ $slot }}
     </div>
     @livewireScripts

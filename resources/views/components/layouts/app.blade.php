@@ -28,7 +28,7 @@
                 {{-- Le rôle, ou le service pour un medecin : les pages
                      surchargent `context` quand il y a plus precis a dire. --}}
                 <span class="app-header__role">
-                    {{ $context ?? \App\Support\Roles::label(auth()->user()->scopedRole()) }}
+                    {{ $context ?? auth()->user()->roleLabel() }}
                 </span>
 
                 <form method="POST" action="{{ route('logout') }}">

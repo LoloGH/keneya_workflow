@@ -17,6 +17,8 @@ use App\Http\Controllers\Service\AttachmentDownloadController as ServiceAttachme
 use App\Http\Controllers\Service\PrescriptionPdfController;
 use App\Http\Controllers\Service\PrintableController;
 use App\Http\Controllers\ServiceController;
+use App\Http\Controllers\Staff\StaffPrintTicketController;
+use App\Http\Controllers\StaffInterfaceController;
 use App\Support\Roles;
 use Illuminate\Support\Facades\Route;
 
@@ -98,6 +100,26 @@ Route::middleware(['auth', 'role.scope:'.Roles::DOCTOR])->group(function () {
 
     Route::get('/service/ordonnances/{prescription}/impression', [PrintableController::class, 'prescription'])
         ->name('service.prescription.print');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Interfaces generiques des types de personnel (v3.2.1, point 10)
+|--------------------------------------------------------------------------
+|
+| UNE seule route, jamais une route par type : le slug est une valeur lue en
+| base, pas un chemin declare a la volee — sans quoi `route:cache` ne verrait
+| rien en production.
+|
+| `role.scope:staff` compare le type du compte connecte au slug demande, avec
+| la meme redirection propre que pour les quatre roles fixes.
+|
+*/
+Route::middleware(['auth', 'role.scope:staff'])->group(function () {
+    Route::get('/staff/{slug}', StaffInterfaceController::class)->name('staff.home');
+
+    Route::get('/staff/{slug}/ticket/{visit}', StaffPrintTicketController::class)
+        ->name('staff.ticket');
 });
 
 // Affichage public en salle d'attente (moniteur mural, sans connexion).

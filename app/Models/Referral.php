@@ -34,12 +34,15 @@ class Referral extends Model
         'from_service_id',
         'to_service_id',
         'from_doctor_id',
+        'from_staff_member_id',
         'completed_by_doctor_id',
+        'completed_by_staff_member_id',
         'instructions',
         'status',
         'result_text',
         'completed_at',
         'closed_by_doctor_id',
+        'closed_by_staff_member_id',
         'closed_at',
     ];
 
@@ -84,6 +87,27 @@ class Referral extends Model
     public function closedByDoctor(): BelongsTo
     {
         return $this->belongsTo(Doctor::class, 'closed_by_doctor_id');
+    }
+
+    public function fromStaffMember(): BelongsTo
+    {
+        return $this->belongsTo(StaffMember::class, 'from_staff_member_id');
+    }
+
+    public function completedByStaffMember(): BelongsTo
+    {
+        return $this->belongsTo(StaffMember::class, 'completed_by_staff_member_id');
+    }
+
+    public function closedByStaffMember(): BelongsTo
+    {
+        return $this->belongsTo(StaffMember::class, 'closed_by_staff_member_id');
+    }
+
+    /** Le prescripteur, qu'il soit medecin ou personnel generique. */
+    public function prescriberName(): ?string
+    {
+        return $this->fromDoctor?->name() ?? $this->fromStaffMember?->name();
     }
 
     public function attachments(): HasMany

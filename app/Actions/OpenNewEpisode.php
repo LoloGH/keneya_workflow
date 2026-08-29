@@ -33,7 +33,7 @@ class OpenNewEpisode
     public function execute(Patient $patient, int $serviceId, ?string $reason = null): Visit
     {
         $visit = DB::transaction(function () use ($patient, $serviceId, $reason): Visit {
-            [$file, $enAttente] = $this->routing->resolve(Service::findOrFail($serviceId));
+            [$file, $enAttente] = $this->routing->forRegistration(Service::findOrFail($serviceId));
 
             $visit = Visit::create([
                 'patient_id' => $patient->getKey(),

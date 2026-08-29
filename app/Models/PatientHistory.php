@@ -37,6 +37,15 @@ class PatientHistory extends Model
     /** Paiement encaisse a la caisse, le patient est oriente vers son service. */
     public const TYPE_PAYMENT_CONFIRMED = 'payment_confirmed';
 
+    /** Admission en hospitalisation (v3.2.1, point 11). */
+    public const TYPE_HOSPITALIZATION_ADMITTED = 'hospitalization_admitted';
+
+    /** Sortie d'hospitalisation. */
+    public const TYPE_HOSPITALIZATION_DISCHARGED = 'hospitalization_discharged';
+
+    /** Soin programme execute — sur la meme frise que le reste du dossier. */
+    public const TYPE_CARE_TASK_COMPLETED = 'care_task_completed';
+
     /**
      * @var array<string, string>
      */
@@ -50,6 +59,9 @@ class PatientHistory extends Model
         self::TYPE_PRESCRIPTION => 'Ordonnance',
         self::TYPE_CONSULTATION_CONCLUSION => 'Conclusion de consultation',
         self::TYPE_PAYMENT_CONFIRMED => 'Paiement confirme',
+        self::TYPE_HOSPITALIZATION_ADMITTED => 'Admission en hospitalisation',
+        self::TYPE_HOSPITALIZATION_DISCHARGED => 'Sortie d\'hospitalisation',
+        self::TYPE_CARE_TASK_COMPLETED => 'Soin realise',
     ];
 
     protected $table = 'patient_history';
@@ -60,6 +72,7 @@ class PatientHistory extends Model
         'type',
         'service_id',
         'doctor_id',
+        'staff_member_id',
         'referral_id',
         'description',
     ];
@@ -82,6 +95,17 @@ class PatientHistory extends Model
     public function doctor(): BelongsTo
     {
         return $this->belongsTo(Doctor::class);
+    }
+
+    public function staffMember(): BelongsTo
+    {
+        return $this->belongsTo(StaffMember::class);
+    }
+
+    /** Qui a pose cet acte, medecin ou personnel generique. */
+    public function authorName(): ?string
+    {
+        return $this->doctor?->name() ?? $this->staffMember?->name();
     }
 
     public function referral(): BelongsTo

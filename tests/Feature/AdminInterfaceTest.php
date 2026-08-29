@@ -10,6 +10,7 @@ use App\Models\Doctor;
 use App\Models\Patient;
 use App\Models\Receptionist;
 use App\Models\Service;
+use App\Models\ServiceKind;
 use App\Support\Roles;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -33,7 +34,7 @@ class AdminInterfaceTest extends TestCase
         Livewire::actingAs($admin)
             ->test(ServiceManager::class)
             ->set('name', 'Radiologie')
-            ->set('kind', Service::KIND_PLATEAU_TECHNIQUE)
+            ->set('service_kind_id', $this->serviceKind(ServiceKind::SLUG_PLATEAU_TECHNIQUE)->getKey())
             ->call('save')
             ->assertHasNoErrors();
 
@@ -42,7 +43,7 @@ class AdminInterfaceTest extends TestCase
         Livewire::actingAs($admin)
             ->test(ServiceManager::class)
             ->call('edit', $service->getKey())
-            ->assertSet('kind', Service::KIND_PLATEAU_TECHNIQUE)
+            ->assertSet('service_kind_id', $this->serviceKind(ServiceKind::SLUG_PLATEAU_TECHNIQUE)->getKey())
             ->set('name', 'Imagerie medicale')
             ->call('save')
             ->assertHasNoErrors();

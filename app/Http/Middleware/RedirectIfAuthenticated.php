@@ -15,8 +15,8 @@ class RedirectIfAuthenticated
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (Auth::check() && ($home = Auth::user()->homeRoute())) {
-            return redirect()->route($home);
+        if (Auth::check() && ($home = Auth::user()->homeUrl())) {
+            return redirect()->to($home);
         }
 
         return $next($request);

@@ -6,35 +6,24 @@ use App\Models\Concerns\RecordsActivity;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Service extends Model
 {
     use HasFactory, RecordsActivity;
 
-    public const KIND_CLINIQUE = 'clinique';
-
-    public const KIND_PLATEAU_TECHNIQUE = 'plateau_technique';
-
-    public const KIND_CAISSE = 'caisse';
-
     /** Nom des deux caisses, referencees par le routage sous condition de paiement. */
     public const CAISSE_TICKET = 'Caisse Ticket';
 
     public const CAISSE_SERVICES = 'Caisse Services';
 
-    /**
-     * Libelles francais des types de service, pour l'affichage.
-     *
-     * @var array<string, string>
-     */
-    public const KIND_LABELS = [
-        self::KIND_CLINIQUE => 'Clinique',
-        self::KIND_PLATEAU_TECHNIQUE => 'Plateau technique',
-        self::KIND_CAISSE => 'Caisse',
-    ];
+    protected $fillable = ['name', 'service_kind_id'];
 
-    protected $fillable = ['name', 'kind'];
+    public function serviceKind(): BelongsTo
+    {
+        return $this->belongsTo(ServiceKind::class);
+    }
 
     public function doctors(): HasMany
     {
@@ -73,38 +62,67 @@ class Service extends Model
      */
     public function scopeCareServices(Builder $query): void
     {
-        $query->where('kind', '!=', self::KIND_CAISSE);
+        $query->whereHas(
+            'serviceKind',
+            fn (Builder $kind) => $kind->where('slug', '!=', ServiceKind::SLUG_CAISSE),
+        );
+    }
+
+    /** @param  Builder<self>  $query */
+    public function scopeOfKindSlug(Builder $query, string $slug): void
+    {
+        $query->whereHas('serviceKind', fn (Builder $kind) => $kind->where('slug', $slug));
     }
 
     public function isCaisse(): bool
     {
-        return $this->kind === self::KIND_CAISSE;
-    }
-
-    public function isPlateauTechnique(): bool
-    {
-        return $this->kind === self::KIND_PLATEAU_TECHNIQUE;
-    }
-
-    public function isClinique(): bool
-    {
-        return $this->kind === self::KIND_CLINIQUE;
+        return $this->serviceKind?->slug === ServiceKind::SLUG_CAISSE;
     }
 
     /**
-     * La caisse par laquelle passe un patient avant d'atteindre ce service :
-     * « Caisse Ticket » pour une consultation, « Caisse Services » pour un acte.
+     * Ce service se regle-t-il avant d'etre realise ?
+     *
+     * Ce n'est plus « est-ce un plateau technique » : l'admin coche
+     * `requires_payment_gate` sur le type, et c'est cet indicateur seul qui
+     * decide du passage par la Caisse Services sur un renvoi.
      */
-    public static function caisseFor(self $destination): ?self
+    public function requiresPaymentGate(): bool
     {
-        $nom = $destination->isPlateauTechnique() ? self::CAISSE_SERVICES : self::CAISSE_TICKET;
+        return (bool) $this->serviceKind?->requires_payment_gate;
+    }
 
-        return static::where('kind', self::KIND_CAISSE)->where('name', $nom)->first();
+    /**
+     * Un service de soins au sens ou l'on y rend visite a quelqu'un.
+     *
+     * Volontairement adosse au type d'origine « clinique » et non a une regle
+     * deduite : un type cree par l'admin ne se voit pas attribuer d'office une
+     * obligation de patient visite qu'il n'a jamais demandee.
+     */
+    public function isClinique(): bool
+    {
+        return $this->serviceKind?->slug === ServiceKind::SLUG_CLINIQUE;
+    }
+
+    /** La caisse ou l'on regle son ticket de consultation. */
+    public static function caisseTicket(): ?self
+    {
+        return static::caisseNamed(self::CAISSE_TICKET);
+    }
+
+    /** La caisse ou l'on regle un acte avant qu'il soit realise. */
+    public static function caisseServices(): ?self
+    {
+        return static::caisseNamed(self::CAISSE_SERVICES);
+    }
+
+    private static function caisseNamed(string $nom): ?self
+    {
+        return static::ofKindSlug(ServiceKind::SLUG_CAISSE)->where('name', $nom)->first();
     }
 
     public function kindLabel(): string
     {
-        return self::KIND_LABELS[$this->kind] ?? $this->kind;
+        return $this->serviceKind?->name ?? '—';
     }
 
     public static function auditLabel(): string

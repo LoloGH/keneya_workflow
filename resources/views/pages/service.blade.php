@@ -13,6 +13,7 @@
             ['key' => 'renvois-sortants', 'label' => 'Mes renvois', 'view' => 'sections.service.outgoing'],
         ]],
         ['key' => 'consultation', 'label' => 'Fin de consultation', 'view' => 'sections.service.consultation'],
+        ['key' => 'hospitalisation', 'label' => 'Patients hospitalises', 'view' => 'sections.service.hospitalizations'],
         ['key' => 'mes-patients', 'label' => 'Mes patients', 'view' => 'sections.service.my-patients'],
         ['key' => 'mes-rendez-vous', 'label' => 'Mes rendez-vous', 'view' => 'sections.service.my-appointments'],
         ['key' => 'planning', 'label' => 'Mon planning', 'view' => 'sections.service.schedule'],

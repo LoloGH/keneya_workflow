@@ -3,8 +3,8 @@
 
     // Les deux caisses sont deux sections d'une meme interface : un seul role
     // les voit toutes les deux.
-    $ticket = Service::where('kind', Service::KIND_CAISSE)->where('name', Service::CAISSE_TICKET)->first();
-    $services = Service::where('kind', Service::KIND_CAISSE)->where('name', Service::CAISSE_SERVICES)->first();
+    $ticket = Service::caisseTicket();
+    $services = Service::caisseServices();
 
     $sections = array_values(array_filter([
         $ticket ? ['key' => 'caisse-ticket', 'label' => 'Caisse Ticket', 'view' => 'sections.caisse.ticket'] : null,

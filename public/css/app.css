@@ -327,13 +327,6 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .board--fullscreen .board__current { color: #6fd0ff; font-size: 4.5rem; }
 .board--fullscreen .board__next-token { background: #1c2226; border-color: #3b464e; color: var(--blanc); }
 
-/* ---------- Connexion ---------- */
-
-.login { max-width: 420px; margin: 3rem auto; padding: 1.5rem; background: var(--blanc);
-    border: 1px solid var(--gris-300); border-radius: var(--rayon); box-shadow: var(--ombre); }
-.login__title { font-size: 1.5rem; }
-.login__subtitle { margin: .2rem 0 1.25rem; color: var(--gris-700); }
-
 /* =========================================================================
    Addendum v2 / v3 — episodes, cloture, caisse, audit, planning
    ========================================================================= */
@@ -347,21 +340,6 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
     font-size: 1.05rem; font-weight: 700; line-height: 1.2;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-
-/* ---------- Page de connexion ---------- */
-
-.login-screen {
-    min-height: 100vh; margin: 0;
-    background-size: cover; background-position: center; background-repeat: no-repeat;
-    background-color: var(--bleu-fonce);
-}
-
-.login-screen__inner {
-    min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.5rem;
-}
-
-.login-screen .login { margin: 0; width: 100%; max-width: 420px; }
-.login__logo { display: block; width: 100%; height: auto; margin-bottom: 1.25rem; }
 
 /* ---------- Indications et alertes ---------- */
 
@@ -680,6 +658,430 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .timeline__actions { margin: .35rem 0 0; }
 
 .attachments li { display: flex; flex-wrap: wrap; gap: .3rem; align-items: center; }
+
+/* =========================================================================
+   Addendum v3.2 — ecran de connexion
+   =========================================================================
+
+   Deux zones : a gauche la scene — le poste de travail du soignant, dessine en
+   SVG et anime en CSS ; a droite la carte de connexion.
+
+   Trois regles ont guide l'ecriture :
+
+   - le formulaire est utilisable des le premier rendu. La carte apparait a
+     150 ms, bien avant la fin de la scene, et aucune animation ne conditionne
+     son affichage ;
+   - aucune animation ne part d'un etat final different de l'etat au repos.
+     Chaque @keyframes ne decrit que son point de depart (« from »), l'arrivee
+     etant l'etat normal de l'element. prefers-reduced-motion peut donc couper
+     toutes les animations : la scene s'affiche directement telle qu'elle doit
+     finir ;
+   - rien a telecharger : ni police, ni image, ni bibliotheque.
+   ========================================================================= */
+
+.login-page {
+    min-height: 100vh;
+    min-height: 100dvh;
+    margin: 0;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    background: var(--blanc);
+}
+
+/* ---------- La scene ---------- */
+
+/* L'image de fond est posee par le gabarit (une seule declaration, pour rester
+   remplacable sans toucher a cette feuille). */
+.login-scene {
+    position: relative;
+    overflow: hidden;
+    height: 216px;
+    background-color: var(--bleu-fonce);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+/* Les halos et l'assombrissement des bords, en une seule couche. */
+.login-scene__vignette {
+    position: absolute; inset: 0; pointer-events: none;
+    background:
+        radial-gradient(120% 90% at 22% 12%, rgba(26, 127, 90, .30) 0%, rgba(26, 127, 90, 0) 55%),
+        radial-gradient(90% 80% at 78% 88%, rgba(15, 92, 140, .45) 0%, rgba(15, 92, 140, 0) 60%),
+        radial-gradient(85% 75% at 50% 45%, rgba(0, 0, 0, 0) 40%, rgba(4, 20, 32, .45) 100%);
+}
+
+.login-scene__art {
+    position: absolute; inset: 0; width: 100%; height: 128%; top: 12%;
+    animation: kw-fondu 650ms ease both;
+}
+
+@keyframes kw-fondu { from { opacity: 0; } }
+
+/* Filet d'ECG au mur. */
+.login-scene__ecg { position: absolute; left: 0; top: 14%; width: 100%; height: 90px; opacity: .22; }
+.login-scene__ecg path {
+    fill: none; stroke: #7fe3c0; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+    stroke-dasharray: 340 1400;
+    animation: kw-ecg 7s linear infinite;
+}
+@keyframes kw-ecg { from { stroke-dashoffset: 1740; } to { stroke-dashoffset: 0; } }
+
+/* Poussiere lumineuse. */
+.login-scene__dust { position: absolute; inset: 0; pointer-events: none; }
+.login-scene__dust i {
+    position: absolute; width: 5px; height: 5px; border-radius: 50%;
+    background: #bfe9dc; opacity: 0;
+    animation: kw-poussiere 11s ease-in-out infinite;
+}
+@keyframes kw-poussiere {
+    0%   { opacity: 0;   transform: translate3d(0, 10px, 0) scale(.7); }
+    35%  { opacity: .45; }
+    70%  { opacity: .18; }
+    100% { opacity: 0;   transform: translate3d(14px, -46px, 0) scale(1.1); }
+}
+
+/* La marque, posee dans le decor. */
+.login-scene__brand {
+    position: absolute; left: 1.15rem; top: .9rem;
+    display: flex; align-items: center; gap: .75rem;
+    animation: kw-monte 600ms ease 60ms both;
+}
+.login-scene__mark { height: 32px; width: auto; }
+.login-scene__brand span { display: none; }
+
+.login-scene__claim { display: none; }
+
+@keyframes kw-monte { from { opacity: 0; transform: translateY(14px); } }
+
+/* ---------- Ce qui s'echappe de la mallette ---------- */
+
+/* Sur la bande etroite du mobile, les orbes debordaient du cadre : elles
+   n'apparaissent qu'a partir de la scene pleine hauteur. */
+.login-scene__orbs { display: none; position: absolute; inset: 0; pointer-events: none; }
+
+.login-orb {
+    position: absolute; left: 52%; top: 62%;
+    width: 34px; height: 34px; border-radius: 10px;
+    display: grid; place-items: center;
+    color: #cdf0e2;
+    background: rgba(255, 255, 255, .10);
+    border: 1px solid rgba(190, 232, 216, .38);
+    box-shadow: 0 10px 26px -12px rgba(0, 0, 0, .7);
+}
+.login-orb svg { width: 15px; height: 15px; }
+
+/* Position de repos : un arc qui monte de la mallette vers la droite, donc
+   vers la carte de connexion. */
+.login-orb--1 { transform: translate3d(36px, -134px, 0); }
+.login-orb--2 { transform: translate3d(116px, -196px, 0); }
+.login-orb--3 { transform: translate3d(198px, -152px, 0); }
+.login-orb--4 { transform: translate3d(248px, -74px, 0); }
+.login-orb--5 { transform: translate3d(152px, -36px, 0); }
+
+.login-orb--1 { animation: kw-orbe 1500ms cubic-bezier(.22, .7, .3, 1) 1800ms both, kw-flotte 4.5s ease-in-out 3300ms infinite; }
+.login-orb--2 { animation: kw-orbe 1500ms cubic-bezier(.22, .7, .3, 1) 1900ms both, kw-flotte 5.2s ease-in-out 3400ms infinite; }
+.login-orb--3 { animation: kw-orbe 1500ms cubic-bezier(.22, .7, .3, 1) 2000ms both, kw-flotte 4.9s ease-in-out 3500ms infinite; }
+.login-orb--4 { animation: kw-orbe 1500ms cubic-bezier(.22, .7, .3, 1) 2080ms both, kw-flotte 5.6s ease-in-out 3600ms infinite; }
+.login-orb--5 { animation: kw-orbe 1500ms cubic-bezier(.22, .7, .3, 1) 2160ms both, kw-flotte 5.0s ease-in-out 3700ms infinite; }
+
+/* Le point de depart est commun : la mallette. L'arrivee est la position de
+   repos ci-dessus, que la regle ne redit pas. */
+@keyframes kw-orbe { from { opacity: 0; transform: translate3d(0, 0, 0) scale(.35); } }
+@keyframes kw-flotte { 0%, 100% { margin-top: 0; } 50% { margin-top: -9px; } }
+
+/* ---------- Le medecin ---------- */
+
+.kw-set { animation: kw-fondu 650ms ease both; }
+
+.kw-doc { animation: kw-arrivee 700ms cubic-bezier(.25, .6, .35, 1) 250ms both; }
+@keyframes kw-arrivee { from { opacity: 0; transform: translateX(-250px); } }
+
+.kw-doc__bob { animation: kw-demarche 700ms ease-in-out 250ms both; }
+@keyframes kw-demarche {
+    0%   { transform: translateY(0); }   12%  { transform: translateY(-3px); }
+    25%  { transform: translateY(0); }   37%  { transform: translateY(-3px); }
+    50%  { transform: translateY(0); }   62%  { transform: translateY(-3px); }
+    75%  { transform: translateY(0); }   87%  { transform: translateY(-3px); }
+    100% { transform: translateY(0); }
+}
+
+/* Les jambes pivotent autour de la hanche : transform-box place l'origine dans
+   le repere du viewBox, pas dans la boite de l'element. */
+.kw-leg { transform-box: view-box; transform-origin: 218px 352px; }
+.kw-leg--a { animation: kw-pas-a 700ms ease-in-out 250ms both; }
+.kw-leg--b { animation: kw-pas-b 700ms ease-in-out 250ms both; }
+@keyframes kw-pas-a {
+    0% { transform: rotate(0deg); }  12% { transform: rotate(15deg); }
+    37% { transform: rotate(0deg); } 62% { transform: rotate(-15deg); }
+    87% { transform: rotate(0deg); } 100% { transform: rotate(0deg); }
+}
+@keyframes kw-pas-b {
+    0% { transform: rotate(0deg); }  12% { transform: rotate(-15deg); }
+    37% { transform: rotate(0deg); } 62% { transform: rotate(15deg); }
+    87% { transform: rotate(0deg); } 100% { transform: rotate(0deg); }
+}
+
+/* Le bras porte la mallette, la lance vers le plateau, puis retombe. */
+.kw-arm {
+    transform-box: view-box; transform-origin: 247px 274px;
+    transform: rotate(-8deg);
+    animation: kw-depose 1400ms cubic-bezier(.3, .6, .3, 1) 900ms both;
+}
+@keyframes kw-depose {
+    0% { transform: rotate(0deg); }  32% { transform: rotate(-42deg); }
+    58% { transform: rotate(-42deg); } 100% { transform: rotate(-8deg); }
+}
+
+/* La mallette portee disparait au moment ou celle du bureau apparait. */
+.kw-case-held { opacity: 0; animation: kw-transfert 1400ms linear 900ms both; }
+@keyframes kw-transfert { 0%, 24% { opacity: 1; } 33%, 100% { opacity: 0; } }
+
+.kw-case {
+    transform-box: view-box; transform-origin: 400px 330px;
+    animation: kw-pose 280ms cubic-bezier(.2, .85, .35, 1) 1200ms both;
+}
+@keyframes kw-pose { from { opacity: 0; transform: translateY(-22px) scale(.94); } }
+
+/* Le couvercle s'arrete a la verticale, un peu en deca : au-dela il croisait
+   le pied de la lampe et se lisait comme une forme flottante. */
+.kw-case__lid {
+    transform-box: view-box; transform-origin: 348px 282px;
+    transform: rotate(-82deg);
+    animation: kw-ouverture 460ms cubic-bezier(.3, .7, .3, 1) 1500ms both;
+}
+@keyframes kw-ouverture { 0%, 8% { transform: rotate(0deg); } }
+
+.kw-case__halo { opacity: .85; animation: kw-halo 700ms ease 1520ms both; }
+@keyframes kw-halo { from { opacity: 0; } }
+
+/* ---------- La carte de connexion ---------- */
+
+.login-panel {
+    display: grid; place-items: center;
+    padding: 1.75rem 1.25rem 2.25rem;
+    background: var(--blanc);
+}
+
+.login-card {
+    width: 100%; max-width: 460px;
+    animation: kw-carte 520ms cubic-bezier(.22, .7, .3, 1) 150ms both;
+}
+@keyframes kw-carte { from { opacity: 0; transform: translateY(18px); } }
+
+.login-card__logo { display: block; width: 100%; max-width: 240px; height: auto; margin: 0 auto 1.4rem; }
+
+/* Le bloc d'accueil est centre sous le logo. Le formulaire, lui, reste aligne
+   a gauche : un champ se lit et se remplit depuis son bord gauche. */
+.login-card__head { text-align: center; margin-bottom: 1.5rem; }
+
+.login-card__title { font-size: 1.42rem; letter-spacing: -.01em; }
+.login-card__subtitle { margin: .35rem 0 .7rem; color: var(--gris-700); font-size: .97rem; }
+
+.login-card__site {
+    display: inline-flex; align-items: center; gap: .4rem; margin: 0;
+    font-size: .82rem; color: var(--vert);
+    background: var(--vert-clair); border-radius: 999px; padding: .25rem .7rem;
+}
+.login-card__site svg { width: 14px; height: 14px; }
+
+/* ---------- Champs ---------- */
+
+.login-control { position: relative; display: flex; align-items: center; }
+
+.login-control__icon {
+    position: absolute; left: .8rem; width: 19px; height: 19px;
+    color: var(--gris-500); pointer-events: none;
+}
+
+.login-control input { padding-left: 2.65rem; transition: border-color 160ms ease, box-shadow 160ms ease; }
+.login-control input.login-control__input--pw { padding-right: 3rem; }
+.login-control input::placeholder { color: #9aa5ac; }
+
+.login-control input:focus {
+    outline: none;
+    border-color: var(--bleu);
+    box-shadow: 0 0 0 3px rgba(15, 92, 140, .16);
+}
+.login-control input:focus-visible { outline: 3px solid var(--bleu); outline-offset: 2px; }
+
+.login-control input[aria-invalid="true"] { border-color: var(--rouge); }
+
+/* Afficher / masquer le mot de passe. La bascule des deux icones se joue en
+   CSS sur aria-pressed : « hidden » ne se pilote pas depuis JavaScript sur un
+   element SVG, qui n'herite pas de HTMLElement. */
+.login-peek {
+    position: absolute; right: .35rem;
+    display: grid; place-items: center;
+    width: 42px; height: 42px;
+    border: 0; border-radius: 8px; background: transparent;
+    color: var(--gris-500); cursor: pointer;
+    transition: color 160ms ease, background 160ms ease;
+}
+.login-peek:hover, .login-peek[aria-pressed="true"] { color: var(--bleu); background: var(--bleu-clair); }
+.login-peek svg { width: 20px; height: 20px; display: block; }
+
+.login-peek [data-icon="off"] { display: none; }
+.login-peek[aria-pressed="true"] [data-icon="on"] { display: none; }
+.login-peek[aria-pressed="true"] [data-icon="off"] { display: block; }
+
+/* ---------- Bouton et etat de chargement ---------- */
+
+.login-submit {
+    position: relative; gap: .6rem; margin-top: .35rem; min-height: 50px;
+    background: linear-gradient(180deg, #1268a0 0%, var(--bleu) 100%);
+    border: 0;
+    box-shadow: 0 6px 16px -8px rgba(15, 92, 140, .85);
+    transition: transform 220ms cubic-bezier(.3, .7, .3, 1), box-shadow 220ms ease, filter 220ms ease;
+}
+.login-submit:hover:not([disabled]) {
+    transform: translateY(-2px); filter: brightness(1.08);
+    box-shadow: 0 12px 22px -10px rgba(15, 92, 140, .9);
+}
+.login-submit:active:not([disabled]) { transform: translateY(0); }
+
+.login-spinner {
+    width: 17px; height: 17px; border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, .35); border-top-color: var(--blanc);
+    animation: kw-rotation 700ms linear infinite;
+}
+@keyframes kw-rotation { to { transform: rotate(360deg); } }
+
+/* ---------- Messages du serveur ---------- */
+
+.login-alert {
+    display: flex; gap: .6rem; align-items: flex-start;
+    margin: 0 0 1rem; padding: .65rem .8rem;
+    font-size: .92rem; color: #8a1c1c;
+    background: var(--rouge-clair);
+    border: 1px solid #eec7c7; border-left: 4px solid var(--rouge);
+    border-radius: 8px;
+}
+.login-alert svg { width: 17px; height: 17px; flex: 0 0 auto; margin-top: .15rem; color: var(--rouge); }
+
+/* ---------- Pied de carte ---------- */
+
+.login-card__foot {
+    margin-top: 1.7rem; padding-top: 1.1rem;
+    border-top: 1px solid var(--gris-300);
+    display: grid; gap: .3rem; text-align: center;
+}
+.login-card__secure {
+    display: inline-flex; align-items: center; justify-content: center; gap: .4rem;
+    font-size: .8rem; color: var(--gris-500);
+}
+.login-card__secure svg { width: 13px; height: 13px; }
+
+.login-card__rights { margin: 0; font-size: .78rem; color: var(--gris-500); }
+.login-card__rights a {
+    color: var(--vert); font-weight: 600; text-decoration: none;
+    border-bottom: 1px solid rgba(26, 127, 90, .35);
+}
+.login-card__rights a:hover { border-bottom-color: var(--vert); }
+
+/* ---------- Deux colonnes a partir de la tablette large ---------- */
+
+@media (min-width: 900px) {
+    .login-page { grid-template-rows: none; grid-template-columns: 57fr 43fr; }
+
+    .login-scene { height: auto; }
+    .login-scene__art { height: 100%; top: 0; }
+
+    .login-scene__brand { left: 8%; top: 7%; }
+    .login-scene__mark { height: 42px; }
+    .login-scene__brand span {
+        display: block;
+        color: #d6ecf7; font-size: .78rem; letter-spacing: .18em; text-transform: uppercase;
+        border-left: 1px solid rgba(214, 236, 247, .3); padding-left: .75rem;
+    }
+
+    /* Sous la marque, dans le haut de la scene : en bas, l'accroche passait
+       par-dessus le medecin et le plateau du bureau. */
+    .login-scene__claim {
+        display: block;
+        position: absolute; left: 8%; top: 20%; max-width: 21rem;
+        margin: 0; color: #eaf4fa;
+        animation: kw-monte 700ms ease 1900ms both;
+    }
+    .login-scene__claim strong { display: block; font-size: 1.35rem; line-height: 1.3; letter-spacing: -.01em; }
+    .login-scene__claim span { display: block; margin-top: .4rem; font-size: .93rem; color: #a9cde2; }
+
+    .login-scene__orbs { display: block; }
+    .login-orb { width: 44px; height: 44px; border-radius: 13px; }
+    .login-orb svg { width: 20px; height: 20px; }
+
+    .login-panel {
+        padding: 3rem 2.5rem;
+        background: linear-gradient(180deg, var(--blanc) 0%, var(--gris-100) 100%);
+    }
+    .login-card { max-width: 400px; }
+    .login-card__logo { max-width: 300px; }
+}
+
+/* ---------- Animations reduites ---------- */
+
+/* Chaque animation ne decrit que son point de depart : les couper affiche donc
+   la scene dans son etat final, mallette ouverte et elements en place. */
+@media (prefers-reduced-motion: reduce) {
+    .login-page *,
+    .login-page *::before,
+    .login-page *::after {
+        animation-duration: .001ms !important;
+        /* Sans cette ligne, le delai reste actif : avec un remplissage « both »
+           l'element garde son etat de depart — donc invisible — pendant deux
+           secondes. La scene doit etre complete des le premier rendu. */
+        animation-delay: 0s !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .001ms !important;
+    }
+}
+
+/* =========================================================================
+   v3.2.1 — catalogues administrables, interfaces generiques, hospitalisation
+   ========================================================================= */
+
+/* Case a cocher alignee sur la ligne de champs, sans casser le rythme du
+   formulaire en colonnes. */
+.field--check { justify-content: flex-end; }
+.field--check label {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    min-height: var(--touch);
+    font-weight: 500;
+    cursor: pointer;
+}
+.field--check input { width: 20px; height: 20px; accent-color: var(--bleu); }
+
+.badge--neutral { background: var(--gris-100); color: var(--gris-700); }
+
+/* Cases a cocher des capacites d'un type de personnel : meme pastille tactile
+   que les jours de la semaine, sur une grille qui tient sur tablette. */
+.capabilities {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: .4rem;
+}
+
+/* Apercu des sections generees : l'admin voit ce qu'il vient de creer. */
+.preview {
+    padding: .85rem 1rem;
+    background: var(--bleu-clair);
+    border-radius: var(--rayon);
+}
+.preview .card__subtitle { margin-top: 0; }
+.preview__list { margin: 0; padding-left: 1.1rem; color: var(--bleu-fonce); }
+.preview__list li { margin: .2rem 0; }
+
+/* Empilement simple de cartes dans une meme section. */
+.stack { display: flex; flex-direction: column; gap: 1rem; }
+
+/* Soin en retard : l'heure est passee sans qu'il ait ete marque. C'est un
+   signal visuel, pas une bascule de statut — cette version ne depend d'aucun
+   scheduler. */
+.care--late { border-left: 4px solid var(--ambre); }
+.care--late .care__time { color: var(--ambre); font-weight: 600; }
+.care--assigned { border-left: 4px solid var(--bleu); }
 
 /* ---------- Ordonnance (portail patient) ---------- */
 

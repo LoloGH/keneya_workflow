@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Carbon;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
@@ -71,9 +72,42 @@ class User extends Authenticatable
         return $this->hasOne(Cashier::class);
     }
 
+    /**
+     * Le rattachement de ce compte a un type de personnel generique
+     * (v3.2.1, point 10). Nul pour les quatre roles fixes, qui ont leurs
+     * propres tables.
+     */
+    public function staffMember(): HasOne
+    {
+        return $this->hasOne(StaffMember::class);
+    }
+
+    public function staffType(): ?StaffType
+    {
+        return $this->staffMember?->staffType;
+    }
+
     public function schedules(): HasMany
     {
         return $this->hasMany(Schedule::class);
+    }
+
+    /**
+     * Ce compte est-il de garde sur ce service, maintenant ?
+     *
+     * S'appuie sur le planning deja en place plutot que sur une assignation
+     * dediee : une rotation d'equipe se lit la, et nulle part ailleurs.
+     */
+    public function isOnDutyFor(int $serviceId, ?Carbon $moment = null): bool
+    {
+        $moment ??= now();
+
+        return $this->schedules()
+            ->whereDate('date', $moment->toDateString())
+            ->where('service_id', $serviceId)
+            ->whereTime('start_time', '<=', $moment->format('H:i:s'))
+            ->whereTime('end_time', '>=', $moment->format('H:i:s'))
+            ->exists();
     }
 
     /**
@@ -95,9 +129,34 @@ class User extends Authenticatable
 
     /**
      * Route nommee de l'unique interface autorisee pour cet utilisateur.
+     *
+     * Nulle pour un type de personnel generique, dont l'interface se designe
+     * par une URL portant son slug : voir homeUrl().
      */
     public function homeRoute(): ?string
     {
         return Roles::homeRoute($this->scopedRole());
+    }
+
+    /**
+     * L'URL de l'unique interface autorisee, roles fixes et types generiques
+     * confondus. C'est le point d'entree unique de toute redirection.
+     */
+    public function homeUrl(): ?string
+    {
+        if ($route = $this->homeRoute()) {
+            return route($route);
+        }
+
+        return $this->staffType()?->homeUrl();
+    }
+
+    /**
+     * Libelle affiche dans la barre de marque : le role fixe, ou le nom du
+     * type de personnel.
+     */
+    public function roleLabel(): string
+    {
+        return Roles::label($this->scopedRole()) ?: (string) $this->staffType()?->name;
     }
 }

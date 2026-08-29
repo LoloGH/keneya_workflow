@@ -6,11 +6,13 @@ use App\Models\Doctor;
 use App\Models\PatientHistory;
 use App\Models\Referral;
 use App\Models\Service;
+use App\Models\StaffMember;
 use App\Models\Visit;
 use App\Services\PatientHistoryRecorder;
 use App\Services\SmsGateway;
 use App\Services\TokenAllocator;
 use App\Support\Audit;
+use App\Support\Caregiver;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -30,7 +32,7 @@ class SendReferral
         private readonly RouteThroughCaisse $routing,
     ) {}
 
-    public function execute(Visit $visit, Doctor $fromDoctor, Service $toService, string $instructions): Referral
+    public function execute(Visit $visit, Doctor|StaffMember $fromDoctor, Service $toService, string $instructions): Referral
     {
         if ($visit->isClosed()) {
             throw new InvalidArgumentException('Ce dossier est cloture : il ne peut plus etre renvoye vers un autre service.');
@@ -54,17 +56,18 @@ class SendReferral
                 'visit_id' => $visit->getKey(),
                 'from_service_id' => $fromService->getKey(),
                 'to_service_id' => $toService->getKey(),
-                'from_doctor_id' => $fromDoctor->getKey(),
+                ...Caregiver::of($fromDoctor)->columns('from'),
                 'instructions' => $instructions,
                 'status' => Referral::STATUS_PENDING,
             ]);
 
-            // Un plateau technique se regle avant d'etre realise : la visite est
-            // routee vers la Caisse Services, la vraie destination attend dans
+            // Un service dont le type porte `requires_payment_gate` se regle
+            // avant d'etre realise : la visite est routee vers la Caisse
+            // Services, la vraie destination attendant dans
             // `pending_next_service_id`. La ligne `referrals` ci-dessus garde,
             // elle, la destination metier reelle — la caisse n'est jamais la
             // destination d'un renvoi au sens medical.
-            [$file, $enAttente] = $this->routing->resolve($toService);
+            [$file, $enAttente] = $this->routing->forReferral($toService);
 
             $visit->update([
                 'service_id' => $file->getKey(),

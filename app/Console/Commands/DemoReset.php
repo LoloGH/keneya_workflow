@@ -47,6 +47,8 @@ class DemoReset extends Command
      */
     private const TABLES_TRANSACTIONNELLES = [
         'attachments',
+        'care_tasks',
+        'hospitalizations',
         'portal_access_attempts',
         'appointments',
         'prescriptions',
@@ -62,15 +64,28 @@ class DemoReset extends Command
 
     /**
      * Configuration de l'etablissement : conservee par defaut, videe avec
-     * --complet puis recreee par les seeders.
+     * --complet.
+     *
+     * Deux tables en sont volontairement absentes : `service_kinds` et
+     * `staff_types` sont peuplees par leurs migrations, pas par un seeder.
+     * Les vider les laisserait vides jusqu'a un `migrate:fresh`, et les
+     * services comme le personnel deviendraient increables.
+     *
+     * `rooms` et `care_task_types` sont, elles, videes : ce sont des
+     * catalogues saisis en demonstration, susceptibles de porter le
+     * vocabulaire d'un prospect precedent. Aucun seeder ne les recree, elles
+     * se resaisissent depuis l'administration.
      *
      * @var array<int, string>
      */
     private const TABLES_CONFIGURATION = [
         'schedules',
+        'rooms',
+        'care_task_types',
         'doctors',
         'receptionists',
         'cashiers',
+        'staff_members',
         'model_has_roles',
         'model_has_permissions',
         'users',
@@ -118,6 +133,10 @@ class DemoReset extends Command
             $complet ? 'vidage complet' : 'donnees transactionnelles',
             self::NOM_HOPITAL,
         ));
+
+        if ($complet) {
+            $this->line('Chambres et types de soins vides : a resaisir depuis l\'administration si la demonstration doit les montrer.');
+        }
 
         return self::SUCCESS;
     }

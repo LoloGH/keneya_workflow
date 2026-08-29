@@ -24,10 +24,12 @@ patient unique**, développée par AXESs pour l'**Hôpital Fousseyni Daou de Kay
 9. [Identité, passages et flux de renvoi](#9-identité-passages-et-flux-de-renvoi)
 10. [Pièces jointes, caisse, ordonnances et rendez-vous](#10-pièces-jointes-caisse-ordonnances-et-rendez-vous)
 11. [Portail patient, impression et suppression de dossier](#11-portail-patient-impression-et-suppression-de-dossier)
-12. [Journal d'audit et plannings](#12-journal-daudit-et-plannings)
-13. [Vérification d'un déploiement](#13-vérification-dun-déploiement)
-14. [Tests](#14-tests)
-15. [Organisation du code](#15-organisation-du-code)
+12. [Catalogues administrables et interfaces générées](#12-catalogues-administrables-et-interfaces-générées)
+13. [Hospitalisation et planning de soins](#13-hospitalisation-et-planning-de-soins)
+14. [Journal d'audit et plannings](#14-journal-daudit-et-plannings)
+15. [Vérification d'un déploiement](#15-vérification-dun-déploiement)
+16. [Tests](#16-tests)
+17. [Organisation du code](#17-organisation-du-code)
 
 ---
 
@@ -44,6 +46,7 @@ lien vers un autre module, pas de tableau de bord générique. Chaque poste
 | `receptionist` | `/reception` | Recherche de dossier existant, enregistrement patient et visiteur, rendez-vous du jour, passages du jour (avec réimpression du ticket), écran de salle d'attente, son propre planning. |
 | `doctor` | `/service` | File d'attente, renvois entrants et sortants, clôture de renvoi et de dossier, conclusion de consultation, ordonnances, « Mes patients » et « Mes rendez-vous », son propre planning, et le dossier patient dans un panneau de la même page. **Aucune fonction de caisse.** |
 | `cashier` | `/caisse` | Les deux files de caisse (« Caisse Ticket » et « Caisse Services »), encaissement et orientation vers le service qui attend, son propre planning. |
+| *(type de personnel sans rôle)* | `/staff/{slug}` | Interface **composée** des seules fonctions cochées par l'administrateur — voir §12. Cloisonnée exactement comme les quatre autres. |
 
 Mise en œuvre :
 
@@ -309,6 +312,11 @@ caisses **Caisse Ticket** et **Caisse Services**) ainsi que :
 Le mot de passe est la valeur de `SEED_DEFAULT_PASSWORD`. **Changez ces comptes
 avant toute mise en service réelle.**
 
+Aucun compte de démonstration n'est créé pour un type de personnel à interface
+dédiée : ces types n'existent que si l'administrateur en crée. La marche à suivre
+est « Personnel → Types de personnel », puis « Personnel → Interfaces dédiées »
+pour y rattacher quelqu'un.
+
 ## 6. Passerelle SMS
 
 Les SMS partent par **SMSGate**, une application Android auto-hébergée : un
@@ -464,7 +472,14 @@ rétablit explicitement le nom de l'établissement : `SettingSeeder` utilise
 
 | Table | Rôle |
 |---|---|
-| `services` | Services de l'établissement, `kind` ∈ {`clinique`, `plateau_technique`, `caisse`}. |
+| `service_kinds` | Types de service administrables, avec `requires_payment_gate`. Trois types d'origine reconnus par leur `slug`. |
+| `services` | Services de l'établissement, rattachés à un `service_kind_id`. |
+| `staff_types` | Types de personnel : `matched_role` (réutilise une interface existante) ou `slug` + `capabilities` (interface générée). |
+| `staff_members` | Rattachement d'un compte à un type générique et à son service, sur le modèle de `doctors`. |
+| `rooms` | Salles d'hospitalisation : service responsable et nombre de lits. L'occupation n'est pas stockée. |
+| `hospitalizations` | Séjour d'un patient : salle, service, admission, sortie. |
+| `care_task_types` | Catalogue des types de soins (sérum, injection, pansement…). |
+| `care_tasks` | Une administration, individuellement marquable `pending` / `done` / `missed`. |
 | `doctors` | Rattachement d'un compte à un service, réaffectable à tout moment. Un médecin multi-services a plusieurs lignes. Jamais à une caisse. |
 | `receptionists` | Rattachement d'un compte au rôle d'accueil. |
 | `cashiers` | Rattachement d'un compte au rôle de caissier, sur le modèle de `receptionists`. |
@@ -473,8 +488,8 @@ rétablit explicitement le nom de l'établissement : `SettingSeeder` utilise
 | `companions` | Accompagnateurs d'un patient. Information non médicale, sans ticket propre. |
 | `visitors` | Fiche visiteur (`HFD-V-00001`), avec ticket dans la file du service visité et **le patient visité** (`patient_id`, facultatif hors service clinique). |
 | `portal_access_attempts` | Tentatives de code du portail par dossier, avec verrouillage temporaire. |
-| `referrals` | Renvoi d'un service à un autre : instructions, résultat, puis clôture par le prescripteur. |
-| `patient_history` | Journal **append-only** du parcours, ancré sur la visite. `type` couvre aussi `consultation_conclusion` et `payment_confirmed`. |
+| `referrals` | Renvoi d'un service à un autre : instructions, résultat, puis clôture par le prescripteur. Auteur, exécutant et clôturant sont chacun un médecin **ou** un membre du personnel générique. |
+| `patient_history` | Journal **append-only** du parcours, ancré sur la visite. `type` couvre aussi `consultation_conclusion`, `payment_confirmed`, `hospitalization_admitted`, `hospitalization_discharged` et `care_task_completed`. Signé par `doctor_id` **ou** `staff_member_id`. |
 | `attachments` | Pièces jointes (PDF, JPG, PNG). `patient_id` est le point d'ancrage ; `referral_id` et `patient_history_id` ne sont renseignés qu'en contexte. |
 | `payments` | Encaissements, en FCFA sans décimales : `ticket` (consultation) ou `service` (acte). |
 | `prescriptions` | Ordonnances en texte libre, exportables en PDF. |
@@ -494,6 +509,13 @@ Trois garanties structurelles :
 - **L'identité ne porte aucun état de passage.** Un patient qui revient six mois
   plus tard ouvre une nouvelle `visits` sous le même `patient_code` : l'épisode
   précédent reste intact et consultable, distinct du nouveau.
+
+Les migrations `2025_04_01_*` ajoutent la couche v3.2.1 : les types de service
+(avec conversion des trois valeurs de l'ancien `enum`), les types de personnel,
+l'ouverture du parcours de soin au personnel générique, et l'hospitalisation.
+Leur `down()` est fonctionnel et vérifié sur SQLite comme sur MariaDB — celui des
+types de service restaure l'ancien `enum`, les types ajoutés par l'admin
+retombant sur « clinique », faute d'équivalent.
 
 Les migrations `2025_03_01_*` ajoutent la couche v3.2 : les caissiers, le
 troisième type de service, le routage sous condition de paiement, le patient
@@ -533,6 +555,22 @@ Dans `/reception`, la recherche précède toujours l'enregistrement :
    nouveau `patient_code`.**
 4. Si aucun patient n'est trouvé, le formulaire d'enregistrement classique crée
    une nouvelle identité.
+
+### Retour d'un renvoi
+
+Quand le service destinataire saisit le résultat, **le patient lui-même revient** :
+`CompleteReferral` bascule `visits.service_id` sur `referrals.from_service_id`,
+régénère un ticket dans cette file et repasse la visite en `waiting`. Sans cela,
+un patient revenu du laboratoire resterait indéfiniment dans la file du
+laboratoire, même si son résultat s'affiche bien chez le médecin.
+
+**Le retour ne repasse jamais par la caisse.** Le paiement ne conditionne que le
+trajet *aller* : on ne fait pas payer deux fois un patient pour revenir voir le
+médecin qui l'a envoyé. `SendReferral` et `CompleteReferral` restent donc **deux
+chemins de code séparés** qui n'appellent jamais la même logique de routage —
+mutualiser les deux réintroduirait le péage sur le retour à la première
+refactorisation. Un dossier clôturé entre-temps ne revient pas en file : un
+résultat en retard ne doit pas ressusciter un dossier clos.
 
 ### Renvoi et clôture
 
@@ -743,7 +781,149 @@ directement.
   cette cascade est **la seule exception prévue** : elle passe sous le modèle en
   SQL direct plutôt que d'affaiblir le garde-fou pour tout le monde.
 
-## 12. Journal d'audit et plannings
+## 12. Catalogues administrables et interfaces générées
+
+### Types de service
+
+`services.kind` était un `enum` codé en dur : chaque nouveau type demandait une
+migration, donc un développeur. Les types vivent désormais dans **`service_kinds`**,
+gérés depuis « Services → Types de service » dans `/admin`.
+
+Le seul comportement porté par un type est **`requires_payment_gate`** : un renvoi
+vers un service de ce type passe par la **Caisse Services** avant réalisation.
+C'est cet indicateur, coché par l'admin, qui remplace la comparaison codée en dur
+sur « plateau technique ».
+
+> **Changement de comportement à connaître.** Avant, *tout* renvoi passait par une
+> caisse. Désormais seul un renvoi vers un type coché passe par la caisse : les
+> trois types d'origine sont convertis avec `requires_payment_gate = true`
+> **uniquement pour « Plateau technique »**, donc un avis inter-services entre
+> deux services cliniques ne se paie plus. Décocher la case sur un type suffit à
+> supprimer l'étape, sans toucher au code.
+
+Trois types sont posés à l'installation — Clinique, Plateau technique, Caisse — et
+restent structurants : le code les reconnaît par leur **`slug`**, jamais par leur
+libellé. Ils sont donc renommables (« Plateau technique » peut devenir « Examens
+complémentaires ») mais pas supprimables. Un type créé ensuite n'a aucun
+comportement codé, et n'est supprimable que s'il n'est utilisé par aucun service.
+
+### Types de personnel
+
+Nouvelle section « Personnel → Types de personnel » dans `/admin`. **Deux chemins
+distincts**, et l'admin voit lequel il emprunte :
+
+1. **`matched_role` renseigné** (`doctor`, `receptionist`, `cashier` — jamais
+   `admin`, qui n'a pas vocation à être multiplié) : le type réutilise telle
+   quelle une des quatre interfaces déjà construites et testées. Rien ne change
+   dans leur fonctionnement, et les personnes continuent d'être créées dans les
+   tables `doctors` / `receptionists` / `cashiers` comme avant.
+
+2. **`matched_role` vide** : le type reçoit une interface **composée de briques
+   existantes** sur `/staff/{slug}`, pilotée par ses `capabilities` :
+
+| Capacité | Ce qu'elle fait apparaître |
+|---|---|
+| `has_queue` | File d'attente du service, « Appeler le suivant » |
+| `can_send_referral` | Envoyer un patient vers un autre service |
+| `can_receive_referral` | Renvois reçus et saisie du résultat |
+| `can_view_dossier` | Dossier patient en lecture (même frise unifiée) |
+| `can_accept_payment` | Encaissement d'un acte de son service |
+| `can_close_visit` | Clôture d'un dossier depuis la file |
+| `can_print_ticket` | Impression du ticket depuis la file |
+| `has_care_tasks` | Soins programmés des patients hospitalisés |
+
+**Une seule route pour tous ces types** — `Route::get('/staff/{slug}', StaffInterfaceController::class)`
+— jamais une route générée à la volée : `route:cache` ne verrait pas des routes
+déclarées depuis la base. Le `slug` n'est qu'une valeur lue en base par une route
+qui existe déjà dans le code.
+
+`EnsureRoleScope` gère ce cas dynamiquement (`role.scope:staff`) : il compare le
+type du compte connecté au slug demandé, avec la **même redirection propre** que
+pour les quatre rôles fixes. Un slug inconnu est traité comme un refus, jamais
+comme un 404 — on ne laisse pas deviner quels types existent en tapant des URL.
+
+Une capacité non cochée n'affiche pas une section vide : elle n'affiche rien, et
+**le composant correspondant refuse dès son montage**. La capacité est un
+garde-fou serveur, pas un filtre d'affichage.
+
+`staff_members` rattache une personne à son type et à son service, sur le modèle
+de `doctors`. Un acte posé par un membre du personnel générique est signé par
+`*_staff_member_id` — **jamais** par `*_doctor_id` : on ne fabrique pas de faux
+médecins dans un dossier. Le petit objet `App\Support\Caregiver` traduit une
+fois pour toutes « qui agit » vers le bon couple de colonnes, ce qui évite de
+dupliquer chaque Action en deux versions.
+
+### Ce que ça ne fait pas
+
+Ce n'est **pas un générateur de code** : c'est un assemblage de briques
+existantes. Un métier qui demande une logique entièrement nouvelle (gestion de
+stock pharmaceutique, dossier de kinésithérapie structuré) demande toujours du
+développement dédié.
+
+Au moment de créer un type sans rôle, l'admin voit **un aperçu des sections qui
+apparaîtront réellement**, recalculé à chaque case cochée : il doit comprendre ce
+qu'il vient de créer avant qu'un membre du personnel ne s'y connecte. Et les
+combinaisons de capacités sont couvertes par une **suite paramétrée**, pas par un
+test manuel par métier — sinon la surface fonctionnelle grandirait plus vite que
+ce qui est vérifié.
+
+## 13. Hospitalisation et planning de soins
+
+Distinct du système de file d'attente : un patient hospitalisé n'attend pas un
+tour avec un ticket, il occupe un lit et reçoit des soins programmés sur
+plusieurs jours.
+
+### Salles et capacité
+
+Catalogue administrable dans « Hospitalisation → Salles ». **L'occupation n'est
+jamais stockée** : elle se compte à la volée sur les hospitalisations actives —
+un compteur en base finit toujours par mentir sur ce qu'il prétend compter.
+
+À l'admission, une salle déjà pleine **avertit sans bloquer** : l'admission passe
+après confirmation explicite. Une urgence hospitalière dépasse parfois la
+capacité nominale, et un blocage strict serait dangereux plutôt que protecteur.
+Une salle qui héberge encore quelqu'un n'est pas supprimable.
+
+### Admission et sortie
+
+L'admission se déclenche depuis `/service` sur un patient appelé. Elle **clôture
+sa visite en cours** — il quitte la file d'attente — et ouvre une
+`hospitalizations`, les deux dans la même transaction : un patient hospitalisé
+qui resterait dans une file serait une incohérence visible au tableau
+d'affichage. Une ligne `patient_history` (`hospitalization_admitted`) la place
+sur la même frise chronologique que le reste du dossier.
+
+La sortie est **bloquée tant qu'il reste des soins `pending`**, avec un message
+explicite : clôturer silencieusement un plan de soins inachevé reviendrait à
+effacer la trace de ce qui n'a pas été fait. Un soin peut être marqué « manqué »
+— il reste alors visible dans le dossier, qualifié plutôt qu'effacé.
+
+### Planning de soins
+
+Le médecin prescrit le soin et sa récurrence ; **il n'assigne pas nommément un
+infirmier à chaque occurrence**. La tâche devient visible pour tout membre du
+personnel dont le type porte `has_care_tasks` et qui est **de garde sur ce
+service au moment présent**, d'après les `schedules` déjà en place — s'appuyer
+sur les rotations enregistrées plutôt que dupliquer une logique d'assignation qui
+casserait au premier remplacement d'équipe.
+
+La **récurrence est résolue à la création**, comme pour la génération groupée de
+planning : « toutes les 8 h pendant 3 jours » produit neuf lignes `care_tasks`,
+chacune marquable individuellement comme faite ou manquée. Un garde-fou refuse
+une prescription au-delà de 200 administrations.
+
+Le médecin peut désigner quelqu'un nommément dans un cas précis
+(`assigned_to_user_id`), mais c'est une **priorité d'affichage, pas une
+restriction d'accès** : un soin ne doit jamais rester bloqué parce que la
+personne désignée est absente.
+
+Un soin dont l'heure est passée sans être marqué s'affiche **en retard**, calculé
+à l'affichage — pas de bascule automatique de statut, donc aucune dépendance à un
+scheduler dans cette version. La traçabilité réelle vient de
+`completed_by_user_id`, renseigné au moment du geste, et chaque soin réalisé
+écrit une ligne `patient_history` (`care_task_completed`) sur la frise du dossier.
+
+## 14. Journal d'audit et plannings
 
 ### Journal d'audit
 
@@ -793,7 +973,7 @@ d'un autre.
   l'établissement à droite, lu depuis la table `settings`** et modifiable par
   l'admin sans redéploiement. Aucun lien de navigation croisée n'y figure.
 
-## 13. Vérification d'un déploiement
+## 15. Vérification d'un déploiement
 
 Avant de remplacer une version en service, un script enchaîne les contrôles et
 rend un verdict :
@@ -811,14 +991,14 @@ routes de téléchargement, et les plafonds d'envoi sont ordonnés correctement.
 Il sort en code 1 dès qu'un contrôle est rouge — utilisable tel quel dans une
 procédure de mise à jour.
 
-## 14. Tests
+## 16. Tests
 
 ```bash
 php artisan test                          # sans Docker
 docker compose exec app php artisan test  # avec Docker
 ```
 
-**182 tests, 636 assertions.** La suite couvre :
+**246 tests, 837 assertions.** La suite couvre :
 
 | Fichier | Objet |
 |---|---|
@@ -840,14 +1020,18 @@ docker compose exec app php artisan test  # avec Docker
 | `AdminInterfaceTest` | Services, médecins, réaffectation, réceptionnistes, dossiers. |
 | `NavigationLayoutTest` | Barre de marque, navigation verticale en arbre, présence de toutes les sections dans chaque interface. |
 | `BrandLogoTest` | Logo aux deux variantes, favicon, absence de dépendance externe. |
+| `ReferralReturnTest` | Retour d'un renvoi complété : le patient réapparaît dans la file du prescripteur, avec un nouveau ticket, **sans repasser par la caisse** ; un dossier clôturé entre-temps ne ressuscite pas. |
+| `ServiceKindTest` | Types de service administrables, slug figé des trois types d'origine, garde-fous de suppression, type « Caisse » non proposable. |
+| `StaffTypeInterfaceTest` | Types de personnel, cloisonnement de `/staff/{slug}`, et **suite paramétrée par combinaison de capacités** : seules les sections cochées apparaissent, et une action hors capacité est refusée côté serveur. |
+| `HospitalizationTest` | Admission clôturant la visite, occupation calculée à la volée, salle pleine avertissant sans bloquer, génération groupée de soins, filtrage « de garde », marquage fait/manqué, sortie bloquée tant qu'un soin reste en attente. |
 | `AcceptanceScenarioTest` | Le scénario d'acceptation de bout en bout, dans l'ordre. |
 | `SmsGatewayTest` | Format international, passerelle désactivée ou injoignable. |
 
 Les tests tournent sur SQLite en mémoire et n'envoient jamais de SMS. La suite
-a également été passée **contre MariaDB 10.11** — 182 tests au vert — et les
-32 migrations ont été vérifiées **dans les deux sens** sur les deux moteurs.
+a également été passée **contre MariaDB 10.11** — 246 tests au vert — et les
+36 migrations ont été vérifiées **dans les deux sens** sur les deux moteurs.
 
-## 15. Organisation du code
+## 17. Organisation du code
 
 Aucune logique métier ne vit dans les vues Blade ou Livewire : les composants
 valident puis délèguent à une action ou à un service.

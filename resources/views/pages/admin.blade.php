@@ -4,11 +4,20 @@
     // une hierarchie n'y apporterait rien.
     $sections = [
         ['key' => 'etablissement', 'label' => 'Etablissement', 'view' => 'sections.admin.establishment'],
-        ['key' => 'services', 'label' => 'Services', 'view' => 'sections.admin.services'],
+        ['key' => 'services', 'label' => 'Services', 'children' => [
+            ['key' => 'liste-services', 'label' => 'Liste des services', 'view' => 'sections.admin.services'],
+            ['key' => 'types-de-service', 'label' => 'Types de service', 'view' => 'sections.admin.service-kinds'],
+        ]],
         ['key' => 'personnel', 'label' => 'Personnel', 'children' => [
+            ['key' => 'types-de-personnel', 'label' => 'Types de personnel', 'view' => 'sections.admin.staff-types'],
             ['key' => 'medecins', 'label' => 'Medecins', 'view' => 'sections.admin.doctors'],
             ['key' => 'receptionnistes', 'label' => 'Receptionnistes', 'view' => 'sections.admin.receptionists'],
+            ['key' => 'personnel-dedie', 'label' => 'Interfaces dediees', 'view' => 'sections.admin.staff-members'],
             ['key' => 'plannings', 'label' => 'Plannings', 'view' => 'sections.admin.schedules'],
+        ]],
+        ['key' => 'hospitalisation', 'label' => 'Hospitalisation', 'children' => [
+            ['key' => 'salles', 'label' => 'Salles', 'view' => 'sections.admin.rooms'],
+            ['key' => 'types-de-soins', 'label' => 'Types de soins', 'view' => 'sections.admin.care-task-types'],
         ]],
         ['key' => 'patients', 'label' => 'Patients', 'view' => 'sections.admin.patients'],
         ['key' => 'audit', 'label' => "Journal d'audit", 'view' => 'sections.admin.audit'],

@@ -7,6 +7,7 @@ use App\Models\Doctor;
 use App\Models\Patient;
 use App\Models\Receptionist;
 use App\Models\Service;
+use App\Models\ServiceKind;
 use App\Models\User;
 use App\Models\Visit;
 use App\Support\Roles;
@@ -39,6 +40,21 @@ abstract class TestCase extends BaseTestCase
         Receptionist::create(['user_id' => $user->getKey()]);
 
         return $user;
+    }
+
+    /**
+     * Un des trois types de service d'origine, cree a la demande : les tests
+     * partent d'une base vide, la migration ne les a pas semes ici.
+     */
+    protected function serviceKind(string $slug): ServiceKind
+    {
+        return ServiceKind::firstOrCreate(
+            ['slug' => $slug],
+            [
+                'name' => ucfirst(str_replace('_', ' ', $slug)),
+                'requires_payment_gate' => $slug === ServiceKind::SLUG_PLATEAU_TECHNIQUE,
+            ],
+        );
     }
 
     protected function makeCashier(): User

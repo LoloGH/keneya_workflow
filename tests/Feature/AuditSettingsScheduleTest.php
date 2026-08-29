@@ -9,6 +9,7 @@ use App\Livewire\Admin\ServiceManager;
 use App\Livewire\Shared\MySchedule;
 use App\Models\Schedule;
 use App\Models\Service;
+use App\Models\ServiceKind;
 use App\Models\Setting;
 use App\Support\Audit;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -95,7 +96,7 @@ class AuditSettingsScheduleTest extends TestCase
         Livewire::actingAs($admin)
             ->test(ServiceManager::class)
             ->set('name', 'Radiologie')
-            ->set('kind', Service::KIND_PLATEAU_TECHNIQUE)
+            ->set('service_kind_id', $this->serviceKind(ServiceKind::SLUG_PLATEAU_TECHNIQUE)->getKey())
             ->call('save')
             ->assertHasNoErrors();
 

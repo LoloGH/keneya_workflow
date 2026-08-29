@@ -14,6 +14,7 @@ use App\Models\Patient;
 use App\Models\PatientHistory;
 use App\Models\Referral;
 use App\Models\Service;
+use App\Models\ServiceKind;
 use App\Models\Visit;
 use App\Services\SmsGateway;
 use App\Support\Roles;
@@ -54,18 +55,20 @@ class AcceptanceScenarioTest extends TestCase
     public function test_le_scenario_complet(): void
     {
         $admin = $this->makeAdmin();
-        $medecineGenerale = Service::create(['name' => 'Medecine Generale', 'kind' => Service::KIND_CLINIQUE]);
+        $medecineGenerale = Service::factory()->create(['name' => 'Medecine Generale']);
+        $plateau = $this->serviceKind(ServiceKind::SLUG_PLATEAU_TECHNIQUE);
 
         // 1. L'admin cree « Radiologie » (plateau technique) et y rattache un medecin.
         Livewire::actingAs($admin)
             ->test(ServiceManager::class)
             ->set('name', 'Radiologie')
-            ->set('kind', Service::KIND_PLATEAU_TECHNIQUE)
+            ->set('service_kind_id', $plateau->getKey())
             ->call('save')
             ->assertHasNoErrors();
 
         $radiologie = Service::where('name', 'Radiologie')->firstOrFail();
-        $this->assertSame(Service::KIND_PLATEAU_TECHNIQUE, $radiologie->kind);
+        $this->assertSame($plateau->getKey(), $radiologie->service_kind_id);
+        $this->assertTrue($radiologie->requiresPaymentGate());
 
         Livewire::actingAs($admin)
             ->test(DoctorManager::class)
@@ -85,7 +88,7 @@ class AcceptanceScenarioTest extends TestCase
         Livewire::actingAs($admin)
             ->test(ServiceManager::class)
             ->set('name', 'Echographie')
-            ->set('kind', Service::KIND_PLATEAU_TECHNIQUE)
+            ->set('service_kind_id', $plateau->getKey())
             ->call('save');
 
         $echographie = Service::where('name', 'Echographie')->firstOrFail();

@@ -13,6 +13,7 @@ use App\Models\Patient;
 use App\Models\PatientHistory;
 use App\Models\Payment;
 use App\Models\Service;
+use App\Models\ServiceKind;
 use App\Models\Visit;
 use App\Services\SmsGateway;
 use App\Support\Audit;
@@ -131,9 +132,9 @@ class CaisseFlowTest extends TestCase
         $this->assertSame($laboratoire->getKey(), $referral->to_service_id);
     }
 
-    public function test_un_renvoi_vers_un_service_clinique_ne_passe_pas_par_la_caisse_services(): void
+    public function test_un_renvoi_vers_un_service_sans_peage_ne_passe_par_aucune_caisse(): void
     {
-        [$ticket] = $this->makeCaisses();
+        $this->makeCaisses();
 
         $depart = Service::factory()->create(['name' => 'Urgences']);
         $cardiologie = Service::factory()->create(['name' => 'Cardiologie']);
@@ -145,9 +146,65 @@ class CaisseFlowTest extends TestCase
 
         $visit->refresh();
 
-        // Un avis inter-services reste une consultation : caisse Ticket.
-        $this->assertSame($ticket->getKey(), $visit->service_id);
-        $this->assertSame($cardiologie->getKey(), $visit->pending_next_service_id);
+        // Le type « Clinique » ne porte pas `requires_payment_gate` : depuis le
+        // v3.2.1, c'est cet indicateur seul qui decide du peage, et un avis
+        // inter-services ne se paie donc plus.
+        $this->assertFalse($cardiologie->requiresPaymentGate());
+        $this->assertSame($cardiologie->getKey(), $visit->service_id);
+        $this->assertNull($visit->pending_next_service_id);
+    }
+
+    public function test_un_type_de_service_cree_par_l_admin_declenche_le_peage_s_il_est_coche(): void
+    {
+        [, $caisseServices] = $this->makeCaisses();
+
+        $depart = Service::factory()->create(['name' => 'Urgences']);
+        $doctor = $this->makeDoctor($depart);
+
+        // Deux types tout neufs, l'un payant, l'autre non — aucun n'existe dans
+        // le code : seul l'indicateur coche par l'admin les distingue.
+        $payant = ServiceKind::create([
+            'name' => 'Imagerie',
+            'slug' => 'imagerie',
+            'requires_payment_gate' => true,
+        ]);
+        $gratuit = ServiceKind::create([
+            'name' => 'Soins de suite',
+            'slug' => 'soins_de_suite',
+            'requires_payment_gate' => false,
+        ]);
+
+        $scanner = Service::factory()->ofKind($payant)->create(['name' => 'Scanner']);
+        $kine = Service::factory()->ofKind($gratuit)->create(['name' => 'Kinesitherapie']);
+
+        $versScanner = $this->makeVisit($depart, ['status' => Visit::STATUS_CALLED]);
+        app(SendReferral::class)->execute($versScanner, $doctor, $scanner, 'Scanner cerebral');
+
+        $this->assertSame($caisseServices->getKey(), $versScanner->refresh()->service_id);
+        $this->assertSame($scanner->getKey(), $versScanner->pending_next_service_id);
+
+        $versKine = $this->makeVisit($depart, ['status' => Visit::STATUS_CALLED]);
+        app(SendReferral::class)->execute($versKine, $doctor, $kine, 'Reeducation');
+
+        $this->assertSame($kine->getKey(), $versKine->refresh()->service_id);
+        $this->assertNull($versKine->pending_next_service_id);
+    }
+
+    public function test_decocher_le_peage_d_un_type_suffit_a_supprimer_l_etape_de_caisse(): void
+    {
+        $this->makeCaisses();
+
+        $depart = Service::factory()->create();
+        $doctor = $this->makeDoctor($depart);
+        $laboratoire = Service::factory()->plateauTechnique()->create(['name' => 'Laboratoire']);
+
+        // L'admin decide que le laboratoire n'est plus payant d'avance.
+        $laboratoire->serviceKind->update(['requires_payment_gate' => false]);
+
+        $visit = $this->makeVisit($depart, ['status' => Visit::STATUS_CALLED]);
+        app(SendReferral::class)->execute($visit, $doctor, $laboratoire->refresh(), 'Bilan');
+
+        $this->assertSame($laboratoire->getKey(), $visit->refresh()->service_id);
     }
 
     public function test_la_confirmation_de_paiement_bascule_la_visite_vers_le_bon_service(): void

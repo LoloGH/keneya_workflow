@@ -5,6 +5,7 @@ namespace App\Livewire\Reception;
 use App\Actions\RegisterVisitor;
 use App\Models\Patient;
 use App\Models\Service;
+use App\Models\ServiceKind;
 use Illuminate\Contracts\View\View;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
@@ -68,7 +69,9 @@ class VisitorRegistrationForm extends Component
     public function requiresPatient(): bool
     {
         return $this->service_id
-            ? (bool) Service::where('id', $this->service_id)->where('kind', Service::KIND_CLINIQUE)->exists()
+            ? (bool) Service::where('id', $this->service_id)
+                ->ofKindSlug(ServiceKind::SLUG_CLINIQUE)
+                ->exists()
             : false;
     }
 
@@ -115,7 +118,7 @@ class VisitorRegistrationForm extends Component
         return view('livewire.reception.visitor-registration-form', [
             // Un visiteur ne se presente pas a une caisse : on ne propose que
             // les services ou l'on peut effectivement rendre visite.
-            'services' => Service::whereNot('kind', Service::KIND_CAISSE)->orderBy('name')->get(),
+            'services' => Service::careServices()->orderBy('name')->get(),
             'matches' => $terme === '' ? collect() : Patient::query()
                 ->where(fn ($q) => $q->where('patient_code', 'like', "%{$terme}%")
                     ->orWhere('name', 'like', "%{$terme}%"))

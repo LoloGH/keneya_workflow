@@ -3,8 +3,10 @@
 namespace App\Livewire\Admin;
 
 use App\Models\Service;
+use App\Models\ServiceKind;
 use App\Support\Audit;
 use Illuminate\Contracts\View\View;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 /**
@@ -16,7 +18,14 @@ class ServiceManager extends Component
 
     public string $name = '';
 
-    public string $kind = Service::KIND_CLINIQUE;
+    /** Le type est desormais une ligne administrable, plus une valeur d'enum. */
+    public ?int $service_kind_id = null;
+
+    #[On('types-de-service-mis-a-jour')]
+    public function refreshKinds(): void
+    {
+        // Un nouveau rendu suffit : la liste des types est relue a chaque rendu.
+    }
 
     /**
      * @return array<string, mixed>
@@ -25,7 +34,18 @@ class ServiceManager extends Component
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'kind' => ['required', 'in:'.Service::KIND_CLINIQUE.','.Service::KIND_PLATEAU_TECHNIQUE],
+            // Une caisse ne se cree pas a la main : les deux caisses sont
+            // posees par le seeder et leur mecanique est cablee au routage.
+            'service_kind_id' => [
+                'required',
+                'integer',
+                'exists:service_kinds,id',
+                function (string $attribut, $valeur, callable $refuser) {
+                    if (ServiceKind::whereKey($valeur)->value('slug') === ServiceKind::SLUG_CAISSE) {
+                        $refuser('Le type « Caisse » est reserve aux deux caisses de l\'etablissement.');
+                    }
+                },
+            ],
         ];
     }
 
@@ -34,7 +54,7 @@ class ServiceManager extends Component
      */
     protected function validationAttributes(): array
     {
-        return ['name' => 'nom du service', 'kind' => 'type de service'];
+        return ['name' => 'nom du service', 'service_kind_id' => 'type de service'];
     }
 
     public function edit(int $serviceId): void
@@ -43,13 +63,13 @@ class ServiceManager extends Component
 
         $this->editingId = $service->getKey();
         $this->name = $service->name;
-        $this->kind = $service->kind;
+        $this->service_kind_id = $service->service_kind_id;
         $this->resetValidation();
     }
 
     public function cancel(): void
     {
-        $this->reset(['editingId', 'name', 'kind']);
+        $this->reset(['editingId', 'name', 'service_kind_id']);
         $this->resetValidation();
     }
 
@@ -105,7 +125,14 @@ class ServiceManager extends Component
     public function render(): View
     {
         return view('livewire.admin.service-manager', [
-            'services' => Service::withCount(['doctors', 'visits'])->orderBy('name')->get(),
+            'services' => Service::with('serviceKind')
+                ->withCount(['doctors', 'visits'])
+                ->orderBy('name')
+                ->get(),
+            // Les caisses ne sont pas proposees : elles ne se creent pas a la main.
+            'kinds' => ServiceKind::where('slug', '!=', ServiceKind::SLUG_CAISSE)
+                ->orderBy('name')
+                ->get(),
         ]);
     }
 }

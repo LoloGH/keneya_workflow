@@ -4,6 +4,7 @@ namespace App\Livewire\Admin;
 
 use App\Models\Doctor;
 use App\Models\Service;
+use App\Models\ServiceKind;
 use App\Models\User;
 use App\Support\Audit;
 use App\Support\Roles;
@@ -50,8 +51,9 @@ class DoctorManager extends Component
             'service_id' => [
                 'required',
                 'integer',
-                Rule::exists('services', 'id')->where(
-                    fn ($query) => $query->where('kind', '!=', Service::KIND_CAISSE),
+                Rule::exists('services', 'id')->whereNotIn(
+                    'service_kind_id',
+                    ServiceKind::where('slug', ServiceKind::SLUG_CAISSE)->pluck('id'),
                 ),
             ],
         ];

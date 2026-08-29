@@ -5,8 +5,10 @@ namespace App\Actions;
 use App\Models\Doctor;
 use App\Models\PatientHistory;
 use App\Models\Referral;
+use App\Models\StaffMember;
 use App\Services\PatientHistoryRecorder;
 use App\Support\Audit;
+use App\Support\Caregiver;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -21,21 +23,27 @@ class CloseReferral
 {
     public function __construct(private readonly PatientHistoryRecorder $history) {}
 
-    public function execute(Referral $referral, Doctor $closedBy): Referral
+    public function execute(Referral $referral, Doctor|StaffMember $closedBy): Referral
     {
         if ($referral->status !== Referral::STATUS_DONE) {
             throw new InvalidArgumentException('Seul un renvoi dont le resultat est arrive peut etre cloture.');
         }
 
-        // Seul le medecin a l'origine du renvoi ferme la boucle.
-        if ((int) $referral->from_doctor_id !== (int) $closedBy->getKey()) {
-            throw new InvalidArgumentException("Seul le medecin a l'origine du renvoi peut le cloturer.");
+        // Seul l'auteur du renvoi ferme la boucle — medecin ou personnel
+        // generique, selon celui qui l'a envoye.
+        $agent = Caregiver::of($closedBy);
+        $auteur = $agent->doctorId() !== null
+            ? (int) $referral->from_doctor_id === $agent->doctorId()
+            : (int) $referral->from_staff_member_id === $agent->staffMemberId();
+
+        if (! $auteur) {
+            throw new InvalidArgumentException("Seul l'auteur du renvoi peut le cloturer.");
         }
 
-        $referral = DB::transaction(function () use ($referral, $closedBy): Referral {
+        $referral = DB::transaction(function () use ($referral, $closedBy, $agent): Referral {
             $referral->update([
                 'status' => Referral::STATUS_CLOSED,
-                'closed_by_doctor_id' => $closedBy->getKey(),
+                ...$agent->columns('closed_by'),
                 'closed_at' => now(),
             ]);
 

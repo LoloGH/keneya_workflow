@@ -10,12 +10,15 @@
 
         <div class="field">
             <label for="service-kind">Type</label>
-            <select id="service-kind" wire:model="kind">
-                @foreach (\App\Models\Service::KIND_LABELS as $value => $label)
-                    <option value="{{ $value }}">{{ $label }}</option>
+            <select id="service-kind" wire:model="service_kind_id">
+                <option value="">— Choisir un type —</option>
+                @foreach ($kinds as $kind)
+                    <option value="{{ $kind->id }}">
+                        {{ $kind->name }}@if ($kind->requires_payment_gate) — paiement prealable @endif
+                    </option>
                 @endforeach
             </select>
-            @error('kind') <p class="field__error">{{ $message }}</p> @enderror
+            @error('service_kind_id') <p class="field__error">{{ $message }}</p> @enderror
         </div>
 
         <div class="btn-row">
