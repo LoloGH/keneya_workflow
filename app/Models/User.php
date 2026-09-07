@@ -152,6 +152,17 @@ class User extends Authenticatable
     }
 
     /**
+     * La cloche de ce compte (v3.2.3, point 2).
+     *
+     * Propriete du compte et non du dossier patient : elle part avec lui
+     * quand il est supprime.
+     */
+    public function staffNotifications(): HasMany
+    {
+        return $this->hasMany(StaffNotification::class);
+    }
+
+    /**
      * Ce compte est-il de garde sur ce service, maintenant ?
      *
      * S'appuie sur le planning deja en place plutot que sur une assignation

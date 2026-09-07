@@ -6,7 +6,12 @@ use App\Actions\DeletePatientRecord;
 use App\Livewire\Admin\PatientDeletion;
 use App\Models\Appointment;
 use App\Models\Attachment;
+use App\Models\CareTask;
+use App\Models\CareTaskType;
 use App\Models\Companion;
+use App\Models\FeedbackEntry;
+use App\Models\HandoffNote;
+use App\Models\Hospitalization;
 use App\Models\Patient;
 use App\Models\PatientHistory;
 use App\Models\Payment;
@@ -103,6 +108,59 @@ class PatientDeletionTest extends TestCase
             'patient_id' => $patient->getKey(),
             'name' => 'Awa Keita',
             'relation' => 'Soeur',
+        ]);
+
+        // La ligne d'historique qui designe le renvoi. Elle manquait a ce
+        // jeu d'essai, et c'est precisement elle qui faisait echouer la
+        // suppression sur le serveur : `patient_history.referral_id` est une
+        // cle etrangere en RESTRICT, or les renvois partaient avant elle. Un
+        // dossier sans renvoi trace se supprimait, un dossier reellement
+        // utilise non — et la suite ne voyait rien.
+        app(PatientHistoryRecorder::class)->record(
+            visit: $visit,
+            type: PatientHistory::TYPE_REFERRAL_SENT,
+            description: 'Renvoi vers le laboratoire.',
+            doctor: $doctor,
+            referral: $referral,
+        );
+
+        // Un sejour, son soin programme et sa note de releve : trois tables
+        // que la suppression ne touchait pas du tout. Un patient ayant ete
+        // hospitalise ne pouvait donc pas etre supprime.
+        $hospitalisation = Hospitalization::create([
+            'patient_id' => $patient->getKey(),
+            'service_id' => $depart->getKey(),
+            'visit_id' => $visit->getKey(),
+            'admitted_by_doctor_id' => $doctor->getKey(),
+            'admitted_at' => now()->subDays(3),
+            'status' => Hospitalization::STATUS_DISCHARGED,
+            'discharged_at' => now()->subDay(),
+        ]);
+
+        CareTask::create([
+            'hospitalization_id' => $hospitalisation->getKey(),
+            'care_task_type_id' => CareTaskType::create(['name' => 'Pansement'])->getKey(),
+            'instructions' => 'Refection du pansement.',
+            'prescribed_by_doctor_id' => $doctor->getKey(),
+            'scheduled_at' => now()->subDays(2),
+            'status' => CareTask::STATUS_DONE,
+        ]);
+
+        HandoffNote::create([
+            'hospitalization_id' => $hospitalisation->getKey(),
+            'written_by_user_id' => $doctor->user_id,
+            'content' => 'Nuit calme.',
+        ]);
+
+        // Un retour depose par le patient : `feedback_entries.patient_id` est
+        // en RESTRICT lui aussi.
+        FeedbackEntry::create([
+            'type' => FeedbackEntry::TYPE_COMPLAINT,
+            'patient_id' => $patient->getKey(),
+            'visit_id' => $visit->getKey(),
+            'service_id' => $depart->getKey(),
+            'content' => 'Attente trop longue.',
+            'status' => FeedbackEntry::STATUS_NEW,
         ]);
 
         return [$patient, $depart, $doctor];
