@@ -39,6 +39,18 @@
         .sign { display: flex; justify-content: space-between; gap: 24px; margin-top: 44px; }
         .sign .cachet { font-size: .72rem; color: #64748b; }
         .sign .cachet .cadre { border: 1px dashed #cbd5e1; height: 70px; width: 190px; margin-top: 4px; }
+
+        /* Les images gardent leurs proportions et sont plafonnees en hauteur :
+           un cachet depose en 2000 px de haut occuperait sinon la page entiere.
+           Signature et cachet du medecin se posent cote a cote, comme sur le
+           papier — l'un signe, l'autre authentifie. */
+        .sign .paraphe {
+            display: flex; align-items: flex-end; justify-content: flex-end;
+            gap: 10px; height: 74px; margin-top: 4px;
+        }
+        .sign .cachet .paraphe { justify-content: flex-start; }
+        .sign .paraphe img { max-height: 70px; max-width: 190px; width: auto; }
+
         .sign .medecin { align-self: flex-end; text-align: right; }
         .sign .medecin .trait { border-top: 1px solid #475569; padding-top: 6px; min-width: 220px; }
         .sign .medecin strong { display: block; }
@@ -114,15 +126,34 @@
             </tbody>
         </table>
 
+        {{-- Cachet et signature, comme sur le PDF. Chaque image manquante
+             laisse son cadre vide plutot que de disparaitre : une ordonnance
+             s'imprime pour un medecin qui n'a rien depose et pour un
+             etablissement sans cachet, et le cadre dit alors ou apposer le
+             tampon a la main. --}}
         <div class="sign">
             <div class="cachet">
                 Cachet de l'etablissement
-                <div class="cadre"></div>
+                @if ($hospitalStamp)
+                    <div class="paraphe"><img src="{{ $hospitalStamp }}" alt=""></div>
+                @else
+                    <div class="cadre"></div>
+                @endif
             </div>
             <div class="medecin">
+                @if ($doctorSignature || $doctorStamp)
+                    <div class="paraphe">
+                        @if ($doctorSignature)
+                            <img src="{{ $doctorSignature }}" alt="">
+                        @endif
+                        @if ($doctorStamp)
+                            <img src="{{ $doctorStamp }}" alt="">
+                        @endif
+                    </div>
+                @endif
                 <div class="trait">
                     <strong>{{ $prescription->doctor->name() }}</strong>
-                    <span>Signature du medecin</span>
+                    <span>Signature et cachet du medecin</span>
                 </div>
             </div>
         </div>

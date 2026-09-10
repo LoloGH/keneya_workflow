@@ -8,3 +8,10 @@ storage/framework/sessions/*
 storage/framework/views/*
 database/database.sqlite
 .env
+
+# Lien symbolique cree par `php artisan storage:link` dans le conteneur : il
+# pointe vers /var/www/html/storage/app/public, chemin qui n'existe pas sur la
+# machine hote. Laisse dans le contexte, il fait echouer `docker compose build`
+# ("invalid file request public/storage"). Au runtime, le montage
+# ./:/var/www/html le remet en place, ou il se resout correctement.
+public/storage
