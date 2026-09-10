@@ -20,7 +20,7 @@
             font-family: "DejaVu Sans", sans-serif;
             font-size: 10.5px;
             line-height: 1.45;
-            color: #14191d;
+            color: #0f172a;
             margin: 0;
         }
 
@@ -35,27 +35,27 @@
         .head .logo img { width: 52px; height: 42px; }
         .head .nature {
             font-size: 17px; font-weight: bold; line-height: 1.15;
-            color: #12314d; letter-spacing: -.2px;
+            color: #1e3a8a; letter-spacing: -.2px;
         }
         /* Le numero de dossier dans un cadre : c'est la seule donnee que
            quelqu'un recopie a la main, elle doit se trouver d'un coup d'oeil. */
         .head .dossier {
             display: inline-block; margin-top: 5px;
             padding: 2px 8px;
-            border: 1px solid #12314d; border-radius: 3px;
+            border: 1px solid #1e3a8a; border-radius: 3px;
             font-size: 11px; font-weight: bold; letter-spacing: .5px;
         }
 
-        .head .etab { border-left: 1px solid #dfe6ec; padding-left: 14px; }
+        .head .etab { border-left: 1px solid #e2e8f0; padding-left: 14px; }
         .head .etab h1 {
             margin: 0 0 4px; padding-bottom: 4px;
-            font-size: 15px; color: #12314d; letter-spacing: -.2px;
-            border-bottom: 2px solid #16806a;
+            font-size: 15px; color: #1e3a8a; letter-spacing: -.2px;
+            border-bottom: 2px solid #059669;
         }
-        .head .coord { margin: 0; font-size: 9px; color: #3f4a52; }
+        .head .coord { margin: 0; font-size: 9px; color: #334155; }
         .head .coord td { padding: 1px 0; vertical-align: top; }
         .head .coord .cle {
-            width: 52px; color: #16806a; font-weight: bold;
+            width: 52px; color: #059669; font-weight: bold;
             text-transform: uppercase; font-size: 7.5px; letter-spacing: .6px;
             padding-top: 2px;
         }
@@ -64,7 +64,7 @@
         .meta { width: 100%; border-collapse: collapse; margin: 4px 0 12px; }
         .meta td { padding: 4px 12px 4px 0; vertical-align: top; }
         .meta .label {
-            color: #6f7a83; font-size: 8px;
+            color: #64748b; font-size: 8px;
             text-transform: uppercase; letter-spacing: .8px;
         }
 
@@ -73,27 +73,27 @@
            puis refaxee, un filet fin disparait, un aplat non. */
         .lignes { width: 100%; border-collapse: collapse; }
         .lignes thead th {
-            background: #16806a; color: #fff;
+            background: #059669; color: #fff;
             font-size: 8.5px; text-transform: uppercase; letter-spacing: .9px;
             text-align: left; padding: 6px 8px;
         }
         .lignes td {
-            padding: 8px; border-bottom: 1px solid #e2e8ec; vertical-align: top;
+            padding: 8px; border-bottom: 1px solid #e2e8f0; vertical-align: top;
         }
-        .lignes .rang { width: 26px; text-align: center; color: #16806a; font-weight: bold; }
+        .lignes .rang { width: 26px; text-align: center; color: #059669; font-weight: bold; }
         .lignes .medicament { font-weight: bold; }
         .lignes .duree { width: 92px; white-space: nowrap; }
-        .lignes .vide { color: #97a2aa; text-align: center; }
+        .lignes .vide { color: #94a3b8; text-align: center; }
 
         /* --- Conseils ---------------------------------------------------
            Encadre meme vide : c'est la zone ou le medecin ecrit a la main ce
            que la saisie ne prevoit pas, et un cadre absent se remplit mal. */
         .conseils {
             margin-top: 12px; padding: 8px 10px;
-            border: 1px solid #cfdae1; border-radius: 4px;
+            border: 1px solid #cbd5e1; border-radius: 4px;
         }
         .conseils .titre {
-            font-size: 8.5px; font-weight: bold; color: #12314d;
+            font-size: 8.5px; font-weight: bold; color: #1e3a8a;
             text-transform: uppercase; letter-spacing: .9px;
         }
         .conseils .texte { margin-top: 4px; min-height: 26px; }
@@ -105,31 +105,31 @@
         .sign { width: 100%; margin-top: 16px; }
         .sign td { vertical-align: top; }
         .sign .titre {
-            font-size: 8.5px; font-weight: bold; color: #12314d;
+            font-size: 8.5px; font-weight: bold; color: #1e3a8a;
             text-transform: uppercase; letter-spacing: .9px;
         }
         .sign .cachet { width: 42%; }
         .sign .cadre {
             margin-top: 5px; height: 74px;
-            border: 1px dashed #c3ced6; border-radius: 4px;
+            border: 1px dashed #cbd5e1; border-radius: 4px;
         }
         .sign .medecin { width: 42%; text-align: center; }
         .sign .paraphe { height: 56px; margin-top: 5px; }
         .sign .paraphe img { max-height: 52px; max-width: 150px; }
-        .sign .trait { border-top: 1px solid #12314d; padding-top: 4px; }
+        .sign .trait { border-top: 1px solid #1e3a8a; padding-top: 4px; }
         .sign .trait strong { display: block; font-size: 11px; }
-        .sign .trait span { font-size: 8.5px; color: #6f7a83; }
+        .sign .trait span { font-size: 8.5px; color: #64748b; }
 
         /* --- Pied ------------------------------------------------------- */
         .devise {
             margin-top: 18px; padding-top: 8px;
-            border-top: 1px solid #16806a;
+            border-top: 1px solid #059669;
             text-align: center; font-style: italic;
-            font-size: 11px; font-weight: bold; color: #16806a;
+            font-size: 11px; font-weight: bold; color: #059669;
         }
         .foot {
             margin-top: 6px; text-align: center;
-            font-size: 7.5px; color: #97a2aa;
+            font-size: 7.5px; color: #94a3b8;
         }
     </style>
 </head>

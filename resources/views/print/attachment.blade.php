@@ -5,22 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $attachment->original_name }} — {{ $hospitalName }}</title>
     <style>
-        body { margin: 0; padding: 16px; font-family: system-ui, sans-serif; background: #eef3f8; color: #10171c; }
+        body { margin: 0; padding: 16px; font-family: system-ui, sans-serif; background: #f1f5f9; color: #1e293b; }
         .sheet { max-width: 900px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; }
         .sheet__head { display: flex; align-items: center; gap: 14px;
-                       border-bottom: 2px solid #12314d; padding-bottom: 10px; margin-bottom: 16px; }
+                       border-bottom: 2px solid #2563eb; padding-bottom: 10px; margin-bottom: 16px; }
         .sheet__head__logo { flex: 0 0 auto; width: 44px; height: auto; }
-        .sheet__head h1 { margin: 0; font-size: 1.1rem; color: #12314d; }
-        .sheet__head p { margin: 2px 0 0; font-size: .85rem; color: #5a656d; }
+        .sheet__head h1 { margin: 0; font-size: 1.1rem; color: #1e3a8a; }
+        .sheet__head p { margin: 2px 0 0; font-size: .85rem; color: #64748b; }
         .sheet img { display: block; max-width: 100%; height: auto; margin: 0 auto; }
-        .sheet embed, .sheet iframe { width: 100%; height: 78vh; border: 1px solid #ccd4d9; }
+        .sheet embed, .sheet iframe { width: 100%; height: 78vh; border: 1px solid #cbd5e1; }
         .actions { max-width: 900px; margin: 14px auto 0; display: flex; gap: 8px; }
         .actions a, .actions button {
             min-height: 44px; padding: .55rem 1.1rem; font: inherit; font-weight: 600;
-            border-radius: 8px; border: 1px solid #12314d; cursor: pointer; text-decoration: none;
-            background: #12314d; color: #fff; display: inline-flex; align-items: center;
+            border-radius: 8px; border: 1px solid #2563eb; cursor: pointer; text-decoration: none;
+            background: #2563eb; color: #fff; display: inline-flex; align-items: center;
         }
-        .actions .secondary { background: #fff; color: #12314d; }
+        .actions .secondary { background: #fff; color: #1e3a8a; border-color: #cbd5e1; }
 
         @media print {
             body { background: #fff; padding: 0; }

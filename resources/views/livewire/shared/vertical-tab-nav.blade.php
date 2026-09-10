@@ -110,42 +110,56 @@
                     <li class="tabnav__famille" aria-hidden="true">{{ $section['famille'] }}</li>
                 @endif
 
-                <li class="tabnav__item" wire:key="sec-{{ $section['key'] }}">
-                    @if ($isGroup)
-                        @php $open = in_array($section['key'], $expanded, true); @endphp
+                @php $open = $isGroup && in_array($section['key'], $expanded, true); @endphp
 
+                {{-- Un groupe porte son propre etat d'ouverture cote navigateur.
+                     Avant, deplier « Personnel » etait un aller-retour serveur :
+                     on cliquait, et le sous-menu apparaissait un instant plus
+                     tard. Alpine le fait maintenant sans reseau, et le serveur
+                     ne donne plus que l'etat de depart — celui qui garantit que
+                     le groupe de la section courante s'ouvre au chargement. --}}
+                <li class="tabnav__item" wire:key="sec-{{ $section['key'] }}"
+                    @if ($isGroup) x-data="{ ouvert: {{ $open ? 'true' : 'false' }} }" @endif>
+                    @if ($isGroup)
                         <button type="button" class="tabnav__group"
-                                wire:click="toggleGroup('{{ $section['key'] }}')"
-                                aria-expanded="{{ $open ? 'true' : 'false' }}"
+                                @click="ouvert = ! ouvert"
+                                :aria-expanded="ouvert ? 'true' : 'false'"
                                 aria-controls="grp-{{ $section['key'] }}">
                             <x-icon name="{{ $section['icon'] ?? 'chevron' }}" size="18" class="tabnav__icone" />
                             <span>{{ $section['label'] }}</span>
-                            {{-- Liaison `:class` et non un `@if` dans l'attribut : les
-                                 attributs d'un composant Blade sont analyses, une
-                                 directive glissee dedans ne compile pas. --}}
-                            <x-icon name="chevron" size="16"
-                                    :class="$open ? 'tabnav__chevron tabnav__chevron--open' : 'tabnav__chevron'" />
+                            {{-- `::class` et non `:class` : sur un composant Blade,
+                                 le simple deux-points est une valeur PHP. Le double
+                                 laisse passer la liaison Alpine telle quelle. --}}
+                            <x-icon name="chevron" size="16" class="tabnav__chevron"
+                                    ::class="ouvert && 'tabnav__chevron--open'" />
                         </button>
 
-                        @if ($open)
-                            <ul class="tabnav__list tabnav__list--nested" id="grp-{{ $section['key'] }}">
-                                @foreach ($section['children'] as $child)
-                                    <li wire:key="sec-{{ $child['key'] }}">
-                                        <button type="button"
-                                                class="tabnav__link @if ($active === $child['key']) tabnav__link--active @endif"
-                                                wire:click="select('{{ $child['key'] }}')"
-                                                @click="drawer = false"
-                                                @if ($active === $child['key']) aria-current="page" @endif>
-                                            {{ $child['label'] }}
-                                        </button>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        @endif
+                        {{-- Les sous-sections sont toujours rendues : c'est ce qui
+                             permet a Alpine de les montrer sans rien demander au
+                             serveur. Le `style` initial evite qu'un groupe ferme
+                             clignote le temps qu'Alpine demarre. --}}
+                        <ul class="tabnav__list tabnav__list--nested" id="grp-{{ $section['key'] }}"
+                            x-show="ouvert" @if (! $open) style="display: none;" @endif>
+                            @foreach ($section['children'] as $child)
+                                <li wire:key="sec-{{ $child['key'] }}">
+                                    <button type="button"
+                                            class="tabnav__link @if ($active === $child['key']) tabnav__link--active @endif"
+                                            wire:click="select('{{ $child['key'] }}')"
+                                            wire:loading.class="tabnav__link--attente"
+                                            wire:target="select('{{ $child['key'] }}')"
+                                            @click="drawer = false"
+                                            @if ($active === $child['key']) aria-current="page" @endif>
+                                        {{ $child['label'] }}
+                                    </button>
+                                </li>
+                            @endforeach
+                        </ul>
                     @else
                         <button type="button"
                                 class="tabnav__link @if ($active === $section['key']) tabnav__link--active @endif"
                                 wire:click="select('{{ $section['key'] }}')"
+                                wire:loading.class="tabnav__link--attente"
+                                wire:target="select('{{ $section['key'] }}')"
                                 @click="drawer = false"
                                 @if ($active === $section['key']) aria-current="page" @endif>
                             <x-icon name="{{ $section['icon'] ?? 'chevron' }}" size="18" class="tabnav__icone" />
@@ -160,7 +174,15 @@
     {{-- Un seul panneau rendu a la fois : les sections inactives ne sont pas
          seulement masquees, elles ne sont pas montees — pas de wire:poll qui
          continuerait a tourner dans le vide. --}}
-    <section class="workspace__panel" aria-live="polite">
+    <section class="workspace__panel" aria-live="polite"
+             wire:loading.attr="aria-busy" wire:target="select">
+
+        {{-- Un filet de progression pendant le changement de section. Purement
+             decoratif : l'etat reel est porte par `aria-busy` ci-dessus, que
+             les lecteurs d'ecran annoncent, et par le repere qui s'est deja
+             deplace dans la barre. --}}
+        <div class="workspace__progress" aria-hidden="true"
+             wire:loading.delay.shortest wire:target="select"></div>
         {{-- Chaque section porte deja son titre de carte : ce titre-ci sert la
              structure du document et les lecteurs d'ecran, sans doubler le
              libelle a l'ecran. L'onglet actif indique visuellement ou l'on est. --}}

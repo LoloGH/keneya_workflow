@@ -19,3 +19,9 @@ yarn-error.log
 /.zed
 /backups
 /database/database.sqlite
+
+# Exports de base et copies de secours faites a la main sur un poste.
+# Un export porte les dossiers patients : verse au depot, il y resterait
+# meme supprime plus tard, dans l'historique et dans chaque clone.
+*.sql
+*.backup

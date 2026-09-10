@@ -87,19 +87,138 @@ class NavigationLayoutTest extends TestCase
             ->test(VerticalTabNav::class, ['sections' => $this->sections(), 'active' => 'enfant-a'])
             ->assertSet('active', 'enfant-a')
             ->assertSet('expanded', ['groupe'])
-            ->assertSee('Enfant A');
+            ->assertSee('Enfant A')
+            // Deplie : le sous-menu est rendu visible, sans style de masquage.
+            ->assertDontSee('id="grp-groupe" x-show="ouvert" style="display: none;"', false);
     }
 
-    public function test_un_groupe_se_deplie_et_se_replie(): void
-    {
-        $component = Livewire::actingAs($this->makeAdmin())
-            ->test(VerticalTabNav::class, ['sections' => $this->sections()]);
+    // ------------------------------------------------- Le fil d'Ariane
 
-        $component->assertDontSee('Enfant A')
-            ->call('toggleGroup', 'groupe')
+    /**
+     * Arborescence avec des familles, comme celle de /admin : c'est la seule
+     * interface dont le fil comporte un maillon intermediaire.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function sectionsAvecFamilles(): array
+    {
+        return [
+            ['key' => 'etablissement', 'label' => 'Etablissement', 'famille' => 'Etablissement',
+                'view' => 'sections.admin.establishment'],
+            ['key' => 'tarifs', 'label' => 'Tarifs', 'famille' => 'Gestion',
+                'view' => 'sections.admin.billable-items'],
+            ['key' => 'audit', 'label' => "Journal d'audit", 'view' => 'sections.admin.audit'],
+        ];
+    }
+
+    public function test_le_premier_maillon_du_fil_ramene_a_la_premiere_section(): void
+    {
+        Livewire::actingAs($this->makeAdmin())
+            ->test(VerticalTabNav::class, ['sections' => $this->sections(), 'active' => 'enfant-b'])
+            ->call('selectPremier')
+            ->assertSet('active', 'premier');
+    }
+
+    public function test_un_maillon_de_famille_mene_a_la_premiere_section_de_cette_famille(): void
+    {
+        Livewire::actingAs($this->makeAdmin())
+            ->test(VerticalTabNav::class, [
+                'sections' => $this->sectionsAvecFamilles(),
+                'active' => 'audit',
+            ])
+            ->call('selectFamille', 'Gestion')
+            ->assertSet('active', 'tarifs');
+    }
+
+    /**
+     * Le fil est ecrit a la main dans chaque vue de section : une faute de
+     * frappe doit laisser la page ou elle est, pas la casser.
+     */
+    public function test_un_maillon_qui_ne_correspond_a_rien_ne_bouge_pas(): void
+    {
+        Livewire::actingAs($this->makeAdmin())
+            ->test(VerticalTabNav::class, [
+                'sections' => $this->sectionsAvecFamilles(),
+                'active' => 'audit',
+            ])
+            ->call('selectFamille', 'Famille inexistante')
+            ->assertSet('active', 'audit');
+    }
+
+    public function test_le_dernier_maillon_du_fil_n_est_pas_cliquable(): void
+    {
+        $rendu = Livewire::actingAs($this->makeAdmin())
+            ->test(VerticalTabNav::class, [
+                'sections' => $this->sectionsAvecFamilles(),
+                'active' => 'tarifs',
+            ])
+            ->html();
+
+        // Le fil de cette section compte trois maillons ; seuls les deux
+        // premiers menent quelque part.
+        $this->assertSame(2, substr_count($rendu, 'class="fil__lien"'));
+        $this->assertStringContainsString('aria-current="page"', $rendu);
+    }
+
+    /**
+     * Garde-fou contre les boutons morts : chaque maillon intermediaire ecrit
+     * dans une vue de /admin doit nommer une famille reellement declaree par
+     * la page. Sans ce test, renommer une famille laisserait un fil qui a l'air
+     * cliquable et ne fait rien.
+     */
+    public function test_les_maillons_intermediaires_de_admin_nomment_des_familles_reelles(): void
+    {
+        $page = file_get_contents(resource_path('views/pages/admin.blade.php'));
+        preg_match_all("/'famille'\s*=>\s*'([^']+)'/", $page, $trouvees);
+        $familles = array_unique($trouvees[1]);
+
+        $this->assertNotEmpty($familles, 'La page /admin ne declare plus aucune famille.');
+
+        foreach (glob(resource_path('views/sections/admin/*.blade.php')) as $vue) {
+            if (! preg_match('/:fil="\[(.+?)\]"/s', file_get_contents($vue), $fil)) {
+                continue;
+            }
+
+            // Nowdoc : le motif contient une apostrophe et des antislashs,
+            // qu'aucune forme de guillemets ne laisserait passer intacts.
+            $motif = <<<'REGEX'
+                /'((?:[^'\\]|\\.)*)'/
+                REGEX;
+
+            preg_match_all($motif, $fil[1], $maillons);
+            $etapes = $maillons[1];
+
+            // Ni le premier maillon (le nom de l'espace) ni le dernier (la page
+            // courante) ne designent une famille.
+            foreach (array_slice($etapes, 1, -1) as $intermediaire) {
+                $this->assertContains(
+                    stripslashes($intermediaire),
+                    $familles,
+                    basename($vue).' : le maillon « '.$intermediaire.' » ne correspond a aucune famille.',
+                );
+            }
+        }
+    }
+
+    /**
+     * Le depliage d'un groupe se fait desormais entierement dans le navigateur.
+     *
+     * Le serveur ne decide plus que de l'etat de depart : il rend toujours les
+     * sous-sections, et masque celles d'un groupe ferme par un style en ligne
+     * qu'Alpine reprend ensuite a son compte. C'est ce contrat-la que ce test
+     * verrouille — le comportement au clic, lui, n'existe plus cote PHP.
+     */
+    public function test_un_groupe_ferme_rend_ses_sous_sections_masquees(): void
+    {
+        Livewire::actingAs($this->makeAdmin())
+            ->test(VerticalTabNav::class, ['sections' => $this->sections()])
+            ->assertSet('expanded', [])
+            // Le libelle est bien dans le document : c'est ce qui permet a
+            // Alpine de l'afficher sans rien demander au serveur.
             ->assertSee('Enfant A')
-            ->call('toggleGroup', 'groupe')
-            ->assertDontSee('Enfant A');
+            // Mais le groupe part ferme, et son etat initial est celui-la.
+            ->assertSee('x-data="{ ouvert: false }"', false)
+            ->assertSee('style="display: none;"', false);
     }
 
     public function test_le_contexte_est_transmis_a_la_section_active(): void

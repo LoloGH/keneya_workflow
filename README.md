@@ -171,8 +171,15 @@ Sous Windows, les mêmes commandes fonctionnent telles quelles dans PowerShell.
 À utiliser si Docker n'est pas installable sur un site donné.
 
 Prérequis communs : PHP 8.4 avec les extensions `pdo_mysql`, `mbstring`,
-`intl`, `zip`, `bcmath`, `openssl`, `fileinfo` ; Composer 2 ; MySQL 8 ou
+`intl`, `zip`, `bcmath`, `gd`, `openssl`, `fileinfo` ; Composer 2 ; MySQL 8 ou
 MariaDB 10.6+.
+
+> **`gd` n'est pas facultative.** C'est elle qui permet à dompdf d'embarquer
+> une image. Sans elle, la génération d'une ordonnance s'arrête sur « The PHP
+> GD extension is required » : ni le logo de l'en-tête, ni le cachet de
+> l'établissement, ni la signature du médecin n'arrivent sur le document.
+> `composer install` la réclame désormais, l'installation échoue donc tout de
+> suite plutôt qu'à la première impression.
 
 > **Plafonds d'envoi à ajuster.** Un PHP fraîchement installé plafonne les
 > envois à 2 Mo, alors que les pièces jointes sont acceptées jusqu'à 10 Mo :
@@ -198,7 +205,7 @@ MariaDB 10.6+.
 
 ```bash
 sudo apt install php8.4-fpm php8.4-mysql php8.4-mbstring php8.4-intl \
-                 php8.4-zip php8.4-bcmath nginx mariadb-server
+                 php8.4-zip php8.4-bcmath php8.4-gd nginx mariadb-server
 
 git clone <url-du-depot> /var/www/keneya-workflow
 cd /var/www/keneya-workflow
@@ -1260,11 +1267,53 @@ dompdf.
 
 L'ordonnance porte l'établissement en tête, le numéro de dossier à droite où
 l'œil le cherche, les quatre renseignements du passage sur une ligne, puis le
-tableau numéroté des lignes. En pied : un cadre pour le cachet de
-l'établissement et un trait de signature nommé.
+tableau numéroté des lignes. En pied : le cachet de l'établissement à gauche,
+la signature puis le cachet du médecin à droite, au-dessus du trait nommé.
+**Chaque image absente laisse son cadre pointillé** plutôt que de disparaître :
+une ordonnance s'imprime pour un médecin qui n'a rien déposé, et le cadre dit
+alors où apposer le tampon à la main.
 
 Rien n'y est laissé au navigateur côté PDF : **dompdf ne connaît ni flexbox ni
 grid**, la mise en page repose donc sur des tableaux et des marges.
+
+#### Les trois images sont encodées dans le document (v3.3.1)
+
+Le cachet de l'établissement, la signature et le cachet du médecin vivent sur
+le disque `signatures`, **hors de `public/`** : une signature de praticien ne
+s'attrape pas en devinant une URL. Elles n'ont donc aucune adresse, et le
+chemin de fichier qui suffisait à dompdf ne voulait rien dire pour un
+navigateur - la vue imprimable affichait une case vide là où le PDF montrait le
+cachet.
+
+`Doctor::fichierEncode()` rend désormais l'image **encodée en source de
+données**. Une seule forme sert les deux rendus, aucune route nouvelle n'est
+ouverte, et l'image est présente au moment où l'on appuie sur Imprimer - une
+image encore en cours de chargement ne part pas à l'imprimante. C'est la raison
+d'être de `PrescriptionPdfData` : le patient doit voir la même ordonnance que
+son médecin, quel que soit le rendu.
+
+**Les images sont ramenées à la taille utile au dépôt (v3.3.1).**
+`StoreSignatureImage::COTE_MAX` borne le plus long côté à 1200 px. Un cachet
+fait cinq centimètres de large sur une ordonnance ; à 300 points par pouce cela
+fait six cents pixels, et 1200 laisse donc le double de ce que le papier peut
+rendre. Les proportions sont conservées - un cachet rond ne doit pas devenir
+ovale - la transparence aussi pour PNG et WebP, et **une image déjà assez petite
+n'est jamais agrandie** : agrandir un scan ne lui ajoute aucun détail.
+
+Une réduction qui échoue laisse passer l'original plutôt que de refuser le
+dépôt : c'est la même règle que partout ici - l'absence d'une signature ne doit
+jamais empêcher d'imprimer une ordonnance.
+
+> **Les images déjà déposées ne sont pas retouchées.** La règle vaut pour les
+> dépôts à venir. Un cachet versé avant la v3.3.1 garde sa taille jusqu'à ce
+> qu'on le redépose depuis l'administration ou la carte de profil.
+
+**`gd` est indispensable au PDF.** dompdf s'en sert pour toute image qu'il
+embarque, le logo de l'en-tête compris. Sans elle, la génération s'arrêtait sur
+« The PHP GD extension is required » et aucune ordonnance ne sortait en PDF.
+L'extension est maintenant installée par l'image Docker et réclamée par
+`composer install` : une installation qui en manque échoue tout de suite, et
+non à la première impression.
 
 ## 16. Langage visuel
 
@@ -1276,21 +1325,69 @@ puise dans les jetons.
 
 | Famille | Jetons |
 |---|---|
-| Typographie | `--texte-xs` … `--texte-2xl`, base à 16px |
+| Typographie | `--texte-xs` … `--texte-2xl`, base à 14px |
 | Espacement | `--e1` … `--e10`, échelle de 4px |
-| Rayons | `--rayon-sm`, `--rayon`, `--rayon-lg`, `--rayon-pilule` |
-| Élévation | `--ombre-1` à `--ombre-3`, chacune en deux couches |
+| Rayons | `--rayon-sm` (8px), `--rayon`, `--rayon-lg` (12px), `--rayon-pilule` |
+| Élévation | `--ombre-1` à `--ombre-3`, de la bordure appuyée au panneau flottant |
 | Mouvement | `--duree`, `--duree-lente`, `--courbe`, `--transition` |
 
 Le mouvement est court (140 ms) et décéléré : sur une tablette, une transition
 longue donne l'impression que l'application rame. **Le survol enrichit, il ne
-conditionne jamais** - un bouton se soulève d'un pixel, une pastille de frise
-grossit, un onglet souligne son libellé, mais rien de tout cela n'est nécessaire
-pour utiliser l'écran au doigt. `prefers-reduced-motion` coupe l'ensemble, y
-compris les déplacements au survol.
+conditionne jamais** - rien de ce qu'il apporte n'est nécessaire pour utiliser
+l'écran au doigt. `prefers-reduced-motion` coupe l'ensemble.
 
-L'anneau de focus est unique pour toute l'application et visible aussi bien sur
-fond clair que sur le bleu nuit de la barre.
+L'anneau de focus est unique pour toute l'application.
+
+### La palette est celle de Keneya-DME (v3.3.0)
+
+Un agent qui passe d'un produit à l'autre ne doit pas avoir l'impression de
+changer de logiciel. Le marine et la sarcelle ont donc laissé la place au **bleu
+clinique** et au **vert keneya** du DME, et l'échelle de gris à l'ardoise
+légèrement bleutée qui les accompagne.
+
+Les noms de jetons (`--bleu*`, `--sarcelle*`) sont conservés : deux mille lignes
+de règles s'y réfèrent, et les renommer aurait noyé le changement de palette
+dans un diff illisible. Seules les valeurs changent, et tout suit.
+
+Les rôles, eux, ne changent pas : **ce qui est bleu se clique, ce qui est vert se
+remarque**. Deux conséquences visibles partout :
+
+- **l'entrée active de la barre latérale est un aplat bleu pâle**, jamais un pavé
+  saturé ; le repérage que faisait la couleur pleine est repris par la graisse du
+  libellé, qui monte à 600 quand les autres restent à 500 ;
+- **la couleur pleine est réservée au bouton primaire**, un seul par écran. Le
+  bouton de tous les jours est blanc et bordé.
+
+Une carte est posée par sa bordure, pas par son relief : coins à 12px, ombre
+presque effacée, en-tête séparé du corps par un filet qui traverse toute la
+carte. Sur une page qui empile dix cartes, dix ombres marquées font un relief de
+carton ondulé.
+
+Les documents imprimés suivent la même substitution - ils portent leur propre
+feuille de style, sans jetons, et seraient restés au marine pendant que l'écran
+passait au bleu. Le **moniteur de salle d'attente**, lui, garde son fond sombre
+et ses teintes réglées pour une lecture à cinq mètres : un écran clair y
+deviendrait un projecteur.
+
+### La navigation ne fait plus attendre (v3.3.0)
+
+**Déplier un groupe de sections ne passe plus par le serveur.** Les
+sous-sections sont toujours rendues, Alpine les montre ou les cache, et le
+serveur ne donne plus que l'état de départ - celui qui garantit que le groupe de
+la section courante s'ouvre au chargement.
+
+**Changer de section pose le repère immédiatement**, avant même la réponse. Un
+filet de progression apparaît au-delà de cent millisecondes - en deçà, la section
+est déjà là et un éclair de barre ne ferait que clignoter. L'entrée que l'on
+quitte s'efface le temps de l'échange : jamais deux entrées actives à la fois.
+
+**Le fil d'Ariane mène quelque part (v3.3.0).** Ses maillons étaient du texte
+inerte. Le premier porte le nom de l'espace et ramène à sa première section ; un
+maillon intermédiaire porte un intitulé de famille de la barre latérale et mène à
+la première section de cette famille ; le dernier est la page courante et n'est
+donc pas une cible. Ce sont des boutons et non des liens : une section n'a pas
+d'adresse propre, c'est un état de la barre latérale. **Aucun maillon ne sort de
+l'espace courant** - un rôle, une interface.
 
 ### Le logo
 
@@ -1448,6 +1545,40 @@ procédure de mise à jour.
 php artisan test                          # sans Docker
 docker compose exec app php artisan test  # avec Docker
 ```
+
+### La suite ne parle qu'à une base jetable (v3.3.1)
+
+**`tests/TestCase.php` impose SQLite en mémoire, en PHP, avant toute
+migration** - et refuse de démarrer si la base résolue est autre chose.
+
+Ce verrou n'est pas une précaution théorique. `phpunit.xml` demandait déjà
+SQLite sans jamais l'obtenir : `docker-compose.yml` injecte le fichier `.env`
+comme variables d'environnement réelles du conteneur, et **Laravel lit sa
+configuration depuis `$_SERVER`**, où docker a posé `DB_CONNECTION=mysql`. Les
+balises `<env>` de PHPUnit n'y changent rien, même avec `force="true"` : elles
+corrigent `getenv()`, pas ce que Laravel consulte.
+
+La suite tournait donc contre la base de développement. Deux conséquences,
+l'une agaçante et l'autre grave :
+
+- un test qui comptait trois entrées de journal en trouvait sept, parce qu'il
+  voyait celles de l'installation ;
+- `demo:reset` - que la suite exécute pour le vérifier - y a vidé les patients,
+  les passages et les ordonnances d'une installation de travail.
+
+Ce que le verrou impose, et pourquoi chaque ligne compte :
+
+| Réglage | Sans lui |
+|---|---|
+| `app.env` à `testing` | `migrate:fresh` refuse de tourner en production et abandonne **en silence** : aucune table n'est créée, chaque test échoue sur « no such table ». |
+| `database.default` à SQLite en mémoire | La suite écrit dans la base de l'hôpital. |
+| `queue.failed.database` | La file des échecs nomme sa connexion séparément : un travail échoué s'inscrivait dans `failed_jobs` de la base de développement. |
+| `session`, `cache`, `queue`, `mail` en mémoire | `.env` les règle tous sur `database` : sessions et travaux de test se déposaient dans la base réelle. |
+| `services.smsgate.url` à `.invalid` | `SMSGATE_URL` désigne le téléphone qui héberge la passerelle, sur le réseau de l'hôpital. Un test qui oublierait de simuler la couche HTTP enverrait de vrais SMS. |
+
+Les deux premiers vont ensemble et **jamais l'un sans l'autre** : forcer
+l'environnement seul autoriserait `migrate:fresh` à s'exécuter sur la base
+pointée par docker, et en supprimerait toutes les tables.
 
 **281 tests, 972 assertions.** La suite couvre :
 

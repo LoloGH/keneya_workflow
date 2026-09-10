@@ -9,6 +9,7 @@ use App\Models\StaffMember;
 use App\Models\User;
 use App\Support\Audit;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use InvalidArgumentException;
 
 /**
@@ -60,6 +61,21 @@ class DeleteStaffAccount
         ['attachments', 'uploaded_by_user_id', 'piece(s) jointe(s)'],
         ['care_tasks', 'completed_by_user_id', 'soin(s) realise(s)'],
         ['care_tasks', 'assigned_to_user_id', 'soin(s) assigne(s)'],
+        ['care_tasks', 'cancelled_by_user_id', 'soin(s) annule(s)'],
+        ['handoff_notes', 'written_by_user_id', 'note(s) de releve'],
+        ['visitors', 'registered_by_user_id', 'visiteur(s) enregistre(s)'],
+        ['broadcast_messages', 'sent_by_user_id', 'diffusion(s) de SMS'],
+        ['feedback_entries', 'submitted_by_user_id', 'retour(s) depose(s)'],
+        ['feedback_entries', 'handled_by_user_id', 'retour(s) pris en charge'],
+        ['feedback_entries', 'resolved_by_user_id', 'retour(s) traite(s)'],
+        ['feedback_survey_ratings', 'user_id', 'note(s) de satisfaction recue(s)'],
+
+        // Module Dossier Medical Electronique. C'est la seule table du module
+        // qui retienne un compte : partout ailleurs, une suppression laisse
+        // simplement la colonne a nul. Un soin programme, lui, doit garder son
+        // prescripteur. La table n'existe que si le module est monte, d'ou le
+        // garde-fou de blockers() — cette liste vaut dans les deux cas.
+        ['dme_care_orders', 'prescriber_id', 'soin(s) programme(s) au dossier medical'],
     ];
 
     public function execute(Doctor|Receptionist|Cashier|StaffMember $membership, User $admin): void
@@ -103,9 +119,14 @@ class DeleteStaffAccount
             $membership->delete();
 
             if ($dernier) {
-                // Le planning est la propriete du compte, pas du dossier
-                // patient : il part avec lui.
+                // Le planning et la cloche sont la propriete du compte, pas
+                // du dossier patient : ils partent avec lui. Les notifications
+                // manquaient, et `staff_notifications.user_id` est une cle
+                // etrangere en RESTRICT — tout compte ayant recu ne serait-ce
+                // qu'une notification refusait donc d'etre supprime, avec un
+                // 500 pour toute explication.
                 $user->schedules()->delete();
+                $user->staffNotifications()->delete();
                 $user->syncRoles([]);
                 $user->delete();
             }
@@ -126,6 +147,13 @@ class DeleteStaffAccount
         }
 
         foreach (self::USER_TRACES as [$table, $colonne, $libelle]) {
+            // Une table absente n'est pas une trace : le module DME n'est pas
+            // toujours monte, et l'interroger alors ferait echouer la
+            // suppression au lieu de l'autoriser.
+            if (! Schema::hasTable($table)) {
+                continue;
+            }
+
             if ($nombre = DB::table($table)->where($colonne, $user->getKey())->count()) {
                 $blocages[] = $nombre.' '.$libelle;
             }

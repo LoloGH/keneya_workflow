@@ -46,8 +46,13 @@ class VerticalTabNav extends Component
     public array $context = [];
 
     /**
-     * Groupes deplies. Un groupe contenant la section active s'ouvre de
-     * lui-meme : on ne cache jamais a l'utilisateur ou il se trouve.
+     * Groupes deplies au chargement. Un groupe contenant la section active
+     * s'ouvre de lui-meme : on ne cache jamais a l'utilisateur ou il se trouve.
+     *
+     * C'est un etat de depart, pas l'etat courant : une fois la page affichee,
+     * l'ouverture et la fermeture des groupes se font entierement dans le
+     * navigateur. Deplier un menu n'a pas a passer par le serveur, et sur une
+     * liaison lente le sous-menu apparaissait avec un temps de retard.
      *
      * @var array<int, string>
      */
@@ -81,15 +86,54 @@ class VerticalTabNav extends Component
         }
     }
 
-    public function toggleGroup(string $key): void
+    /**
+     * Premiere section de l'espace : la destination du premier maillon du fil
+     * d'Ariane, qui porte le nom de l'espace (« Accueil », « Service »,
+     * « Caisse », « Poste »).
+     */
+    public function selectPremier(): void
     {
-        if (in_array($key, $this->expanded, true)) {
-            $this->expanded = array_values(array_diff($this->expanded, [$key]));
+        if ($leaf = $this->firstLeaf($this->sections)) {
+            $this->select($leaf['key']);
+        }
+    }
 
-            return;
+    /**
+     * Premiere section d'une famille : la destination d'un maillon
+     * intermediaire du fil d'Ariane, qui porte un intitule de famille
+     * (« Etablissement », « Gestion », « Systeme »).
+     *
+     * Une famille n'est pas une page — c'est un intitule de reperage dans la
+     * barre laterale. Cliquer dessus mene donc a sa premiere section, ce que
+     * ferait la barre elle-meme. A defaut de famille, on accepte le libelle
+     * d'une section : un fil peut nommer une section parente plutot qu'une
+     * famille, et il vaut mieux y aller que ne rien faire.
+     *
+     * Un intitule qui ne correspond a rien ne fait rien, sans erreur : le fil
+     * est ecrit a la main dans chaque vue de section, et une faute de frappe
+     * ne doit pas casser la page.
+     */
+    public function selectFamille(string $famille): void
+    {
+        foreach ($this->sections as $section) {
+            if (($section['famille'] ?? null) === $famille) {
+                if ($leaf = $this->firstLeaf([$section])) {
+                    $this->select($leaf['key']);
+                }
+
+                return;
+            }
         }
 
-        $this->expanded[] = $key;
+        foreach ($this->sections as $section) {
+            if (($section['label'] ?? null) === $famille) {
+                if ($leaf = $this->firstLeaf([$section])) {
+                    $this->select($leaf['key']);
+                }
+
+                return;
+            }
+        }
     }
 
     /**

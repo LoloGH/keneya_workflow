@@ -36,11 +36,17 @@ final class PrescriptionPdfData
             'hospitalHours' => Setting::get(Setting::HOSPITAL_HOURS),
             'hospitalMotto' => Setting::get(Setting::HOSPITAL_MOTTO),
 
-            // Signature et tampons : des chemins absolus, ou null. C'est le
-            // modele qui verifie que le fichier est bien la — un chemin mort
-            // ferait echouer dompdf, et une ordonnance qu'on ne peut plus
-            // imprimer serait pire qu'une signature absente.
-            'hospitalStamp' => Doctor::fichierExistant(Setting::get(Setting::HOSPITAL_STAMP_PATH)),
+            // Signature et tampons : des images encodees dans la page, ou null.
+            // C'est le modele qui verifie que le fichier est bien la — un
+            // chemin mort ferait echouer dompdf, et une ordonnance qu'on ne
+            // peut plus imprimer serait pire qu'une signature absente.
+            //
+            // Encodees et non pointees par un chemin : le PDF s'accommodait
+            // d'un chemin de fichier, la vue imprimable non — elle est lue par
+            // un navigateur, qui n'a acces ni au disque ni a ces fichiers,
+            // ranges hors de `public/`. Une seule forme sert donc les deux
+            // rendus, ce qui est la raison d'etre de cette classe.
+            'hospitalStamp' => Doctor::fichierEncode(Setting::get(Setting::HOSPITAL_STAMP_PATH)),
             'doctorSignature' => $medecin?->signatureFile(),
             'doctorStamp' => $medecin?->stampFile(),
         ];

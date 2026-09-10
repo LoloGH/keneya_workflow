@@ -382,7 +382,13 @@ class DossierWorkflowV32Test extends TestCase
             // sont plus un seul bloc de texte.
             ->assertSee('Amoxicilline 1 g')
             ->assertSee('matin et soir')
-            ->assertSee('Signature du medecin')
+            // Le bloc porte la signature et le cachet du medecin depuis la
+            // v3.3.1 : son intitule le dit, sans quoi il annoncerait moins
+            // que ce qu'il montre.
+            ->assertSee('Signature et cachet du medecin')
+            // `escape: false` : l'intitule est du texte fixe du gabarit, son
+            // apostrophe n'est donc pas echappee dans la page.
+            ->assertSee("Cachet de l'etablissement", escape: false)
             ->assertSee('window.print()', escape: false);
     }
 

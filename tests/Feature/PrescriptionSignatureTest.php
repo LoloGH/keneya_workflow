@@ -96,6 +96,146 @@ class PrescriptionSignatureTest extends TestCase
             ->assertOk();
     }
 
+    // ----------------------------------------- Le poids des images deposees
+
+    /**
+     * Une image plus large que `COTE_MAX` est ramenee a cette taille.
+     *
+     * Ces trois images sont encodees dans la page imprimable : un cachet
+     * depose en 2000 pixels de large y pesait plus d'un mega-octet a lui seul.
+     * Les proportions sont conservees — un cachet rond ne doit pas devenir
+     * ovale.
+     */
+    public function test_une_image_trop_large_est_ramenee_a_la_taille_utile(): void
+    {
+        $medecin = $this->makeDoctor(Service::factory()->create());
+
+        app(StoreSignatureImage::class)->forDoctorStamp(
+            UploadedFile::fake()->image('tampon.png', 2400, 1200),
+            $medecin,
+        );
+
+        $chemin = $medecin->fresh()->stamp_path;
+        $mesures = getimagesizefromstring(Storage::disk('signatures')->get($chemin));
+
+        $this->assertSame(StoreSignatureImage::COTE_MAX, $mesures[0]);
+        $this->assertSame(StoreSignatureImage::COTE_MAX / 2, $mesures[1]);
+    }
+
+    /**
+     * Une image deja assez petite passe telle quelle : on ne la reencode pas,
+     * et surtout on ne l'agrandit jamais — agrandir un scan ne lui ajoute
+     * aucun detail, cela ne ferait que gonfler le fichier.
+     */
+    public function test_une_image_assez_petite_n_est_pas_touchee(): void
+    {
+        $medecin = $this->makeDoctor(Service::factory()->create());
+
+        app(StoreSignatureImage::class)->forDoctorSignature(
+            UploadedFile::fake()->image('signature.png', 400, 200),
+            $medecin,
+        );
+
+        $chemin = $medecin->fresh()->signature_path;
+        $mesures = getimagesizefromstring(Storage::disk('signatures')->get($chemin));
+
+        $this->assertSame(400, $mesures[0]);
+        $this->assertSame(200, $mesures[1]);
+    }
+
+    /** Le tampon de l'etablissement suit la meme regle. */
+    public function test_le_tampon_de_l_etablissement_est_reduit_aussi(): void
+    {
+        app(StoreSignatureImage::class)->forHospitalStamp(
+            UploadedFile::fake()->image('cachet.png', 3000, 3000),
+        );
+
+        $chemin = Setting::get(Setting::HOSPITAL_STAMP_PATH);
+        $mesures = getimagesizefromstring(Storage::disk('signatures')->get($chemin));
+
+        $this->assertSame(StoreSignatureImage::COTE_MAX, $mesures[0]);
+        $this->assertSame(StoreSignatureImage::COTE_MAX, $mesures[1]);
+    }
+
+    // ------------------------------------- Les images arrivent sur le papier
+
+    /**
+     * Le defaut signale : la vue imprimable ne montrait ni le cachet de
+     * l'etablissement ni la signature du medecin.
+     *
+     * Les donnees etaient pourtant bien passees au gabarit — c'est le gabarit
+     * qui ne les affichait pas, et la forme qu'elles prenaient, un chemin de
+     * fichier sur le disque du serveur, n'aurait de toute facon rien dit a un
+     * navigateur. Ce test tient les deux bouts : les trois images sont dans la
+     * page, et sous une forme qu'un navigateur sait afficher.
+     */
+    public function test_la_vue_imprimable_montre_le_cachet_et_la_signature(): void
+    {
+        $service = Service::factory()->create();
+        $medecin = $this->makeDoctor($service);
+
+        Storage::disk('signatures')->put('medecins/1/signature.png', 'PNG-signature');
+        Storage::disk('signatures')->put('medecins/1/tampon.png', 'PNG-tampon-medecin');
+        Storage::disk('signatures')->put('etablissement/cachet.png', 'PNG-cachet');
+
+        $medecin->forceFill([
+            'signature_path' => 'medecins/1/signature.png',
+            'stamp_path' => 'medecins/1/tampon.png',
+        ])->save();
+
+        Setting::put(Setting::HOSPITAL_STAMP_PATH, 'etablissement/cachet.png');
+
+        $ordonnance = $this->makePrescription($medecin, $this->makeVisit($service));
+
+        $reponse = $this->actingAs($medecin->user)
+            ->get(route('service.prescription.print', $ordonnance))
+            ->assertOk();
+
+        $html = $reponse->getContent();
+
+        foreach ([
+            'PNG-cachet' => "le cachet de l'etablissement",
+            'PNG-signature' => 'la signature du medecin',
+            'PNG-tampon-medecin' => 'le tampon du medecin',
+        ] as $contenu => $quoi) {
+            $this->assertStringContainsString(
+                'data:image/png;base64,'.base64_encode($contenu),
+                $html,
+                $quoi." n'est pas sur la vue imprimable.",
+            );
+        }
+
+        // Le cadre pointille ne sert qu'a signaler une image absente : il n'a
+        // rien a faire la ou le cachet est bien present.
+        $this->assertStringNotContainsString('<div class="cadre"></div>', $html);
+    }
+
+    /**
+     * Le PDF et la vue imprimable recoivent exactement les memes images. C'est
+     * la promesse de PrescriptionPdfData, et elle vaut aussi pour la forme :
+     * une seule representation sert les deux rendus.
+     */
+    public function test_le_pdf_et_la_vue_imprimable_portent_les_memes_images(): void
+    {
+        $service = Service::factory()->create();
+        $medecin = $this->makeDoctor($service);
+
+        Storage::disk('signatures')->put('medecins/1/signature.png', 'PNG-signature');
+        $medecin->forceFill(['signature_path' => 'medecins/1/signature.png'])->save();
+
+        $ordonnance = $this->makePrescription($medecin, $this->makeVisit($service));
+        $donnees = PrescriptionPdfData::for($ordonnance->fresh(['patient', 'doctor.user', 'visit.service']));
+
+        $this->assertSame(
+            'data:image/png;base64,'.base64_encode('PNG-signature'),
+            $donnees['doctorSignature'],
+        );
+
+        $this->actingAs($medecin->user)
+            ->get(route('service.prescription.pdf', $ordonnance))
+            ->assertOk();
+    }
+
     // --------------------------------------------- En-tete configurable
 
     public function test_l_en_tete_reprend_les_coordonnees_reglees_dans_l_administration(): void

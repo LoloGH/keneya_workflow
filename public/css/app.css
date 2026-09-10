@@ -16,71 +16,84 @@
 
 :root {
     /* --- Couleurs -------------------------------------------------------
-       Deux teintes portent la marque, et chacune a un role fixe :
+       La palette est celle de Keneya-DME, pour qu'un agent qui passe d'un
+       produit a l'autre n'ait pas l'impression de changer de logiciel. Deux
+       teintes, chacune avec un role fixe :
 
-         - le MARINE structure et agit — entree active de la barre laterale,
-           bouton primaire, badge d'icone en tete de carte, filets de titre ;
-         - la SARCELLE signe et met en valeur — monogramme, avatar, etats
+         - le BLEU CLINIQUE agit — bouton primaire, entree active de la barre
+           laterale, liens, anneau de focus ;
+         - le VERT KENEYA signe et rassure — monogramme, avatar, etats
            positifs, filets des documents imprimes.
 
-       Les intervertir ferait perdre la lecture : sur un ecran, ce qui est
-       marine se clique, ce qui est sarcelle se remarque. Le marine reste
-       volontairement desature et sombre — c'est un ecran de service allume
-       douze heures par jour, pas une page d'accueil.
+       Les intervertir ferait perdre la lecture : ce qui est bleu se clique,
+       ce qui est vert se remarque.
 
-       Les noms `--bleu*` sont conserves : deux mille lignes de regles s'y
-       referent, et les renommer aurait noye le changement de palette dans un
-       diff illisible. Seules les valeurs changent, et tout suit. */
-    --bleu: #123f60;
-    --bleu-vif: #1a5b86;
-    --bleu-fonce: #0e3049;
-    --bleu-nuit: #0a2439;
-    --bleu-clair: #e6eef6;
-    --bleu-pale: #f2f7fb;
+       Le bleu est franc et clair la ou il etait marine et sombre. C'est le
+       changement qui se voit le plus : au DME, une entree active de barre
+       laterale est un aplat bleu PALE avec du texte bleu fonce, jamais un
+       pave sature. La couleur pleine reste pour le seul bouton primaire de
+       la page.
 
-    /* La sarcelle de la marque. `--vert` la reprend plutot que de garder un
-       vert distinct : un bandeau de succes d'une teinte et un avatar d'une
-       autre, a deux centimetres l'un de l'autre, se lisent comme une erreur
+       Les noms `--bleu*` et `--sarcelle*` sont conserves : deux mille lignes
+       de regles s'y referent, et les renommer aurait noye le changement de
+       palette dans un diff illisible. Seules les valeurs changent, et tout
+       suit. */
+    --bleu: #2563eb;
+    --bleu-vif: #3b82f6;
+    --bleu-fonce: #1d4ed8;
+    --bleu-nuit: #1e3a8a;
+    --bleu-clair: #dbeafe;
+    --bleu-pale: #eff6ff;
+
+    /* Le vert de la marque. `--vert` le reprend plutot que de garder un vert
+       distinct : un bandeau de succes d'une teinte et un avatar d'une autre,
+       a deux centimetres l'un de l'autre, se lisent comme une erreur
        d'impression. Une seule teinte pour « tout va bien » et pour « c'est
        nous ». */
-    --sarcelle: #16806a;
-    --sarcelle-vif: #1a9a7f;
-    --sarcelle-fonce: #0f5f4e;
-    --sarcelle-clair: #e6f4ef;
+    --sarcelle: #059669;
+    --sarcelle-vif: #10b981;
+    --sarcelle-fonce: #047857;
+    --sarcelle-clair: #ecfdf5;
 
     --vert: var(--sarcelle);
     --vert-clair: var(--sarcelle-clair);
-    --ambre: #9a5b00;
-    --ambre-clair: #fdf1dd;
-    --rouge: #9c1f22;
-    --rouge-clair: #fbeaea;
+    --ambre: #b45309;
+    --ambre-clair: #fffbeb;
+    --rouge: #dc2626;
+    --rouge-clair: #fef2f2;
 
-    /* Fond de page : un bleu-gris tres clair, pas un gris neutre. C'est lui
-       qui fait ressortir le blanc des cartes ; sur un gris neutre elles
-       paraissent grises a leur tour. */
-    --fond: #eef3f8;
+    /* Fond de page : l'ardoise tres claire du DME. C'est elle qui fait
+       ressortir le blanc des cartes ; sur un gris neutre elles paraissent
+       grises a leur tour. L'echelle de « gris » qui suit est la meme ardoise,
+       du plus clair au plus sombre — pas un gris neutre, un gris legerement
+       bleute qui s'accorde au bleu clinique. */
+    --fond: #f1f5f9;
 
-    --gris-900: #14191d;
-    --gris-800: #2a3339;
-    --gris-700: #4a555d;
-    --gris-500: #6f7a83;
-    --gris-400: #97a2aa;
-    --gris-300: #d3dbe0;
-    --gris-200: #e6ebee;
-    --gris-100: #f1f5f7;
-    --gris-50: #f7fafb;
+    --gris-900: #0f172a;
+    --gris-800: #1e293b;
+    --gris-700: #334155;
+    --gris-600: #475569;
+    --gris-500: #64748b;
+    --gris-400: #94a3b8;
+    --gris-300: #cbd5e1;
+    --gris-200: #e2e8f0;
+    --gris-100: #f1f5f9;
+    --gris-50: #f8fafc;
     --blanc: #ffffff;
 
     /* --- Typographie ----------------------------------------------------
-       Base a 16px : le 17px d'origine faisait deborder les libelles sur
-       telephone et gonflait chaque carte sans rien gagner en lisibilite. */
+       Base a 14px, la densite du DME : l'essentiel du texte de travail —
+       tableaux, libelles, boutons, corps de carte — s'y lit. Ce qui doit
+       ressortir ressort par la graisse et la couleur, pas par la taille.
+       C'est ce qui laisse tenir une file d'attente entiere sur un ecran de
+       tablette sans faire defiler. Les titres de page restent a 24px. */
     --texte-xs: .75rem;
     --texte-sm: .8125rem;
-    --texte-base: .9375rem;
-    --texte-md: 1rem;
-    --texte-lg: 1.125rem;
-    --texte-xl: 1.375rem;
-    --texte-2xl: 1.75rem;
+    --texte-base: .875rem;
+    --texte-md: .875rem;
+    --texte-lg: 1rem;
+    --texte-xl: 1.25rem;
+    --texte-2xl: 1.5rem;
 
     /* --- Espacement, sur une echelle de 4px ------------------------------ */
     --e1: .25rem;
@@ -93,20 +106,23 @@
     --e10: 2.5rem;
 
     /* --- Rayons ---------------------------------------------------------- */
-    --rayon-sm: 6px;
+    --rayon-sm: 8px;
     --rayon: 10px;
-    --rayon-lg: 14px;
+    --rayon-lg: 12px;
     --rayon-pilule: 999px;
 
     /* --- Elevation -------------------------------------------------------
-       Deux ombres superposees : une courte pour poser l'objet, une longue et
-       tres douce pour le detacher du fond. Une ombre unique fait toujours
-       autocollant. */
-    --ombre: 0 1px 2px rgba(11, 40, 60, .05), 0 1px 3px rgba(11, 40, 60, .04);
+       Des ombres franchement plus discretes qu'avant : au DME une carte est
+       posee par sa bordure, pas par son ombre. `--ombre-1` se devine a peine
+       et c'est voulu — sur une page qui empile dix cartes, dix ombres
+       marquees font un relief de carton ondule. Les deux crans superieurs
+       sont reserves a ce qui flotte reellement au-dessus de la page : un
+       menu deroulant, un panneau de notifications. */
+    --ombre: 0 1px 2px 0 rgba(15, 23, 42, .05);
     --ombre-1: var(--ombre);
-    --ombre-2: 0 2px 4px rgba(11, 40, 60, .06), 0 6px 16px rgba(11, 40, 60, .07);
-    --ombre-3: 0 8px 16px rgba(11, 40, 60, .08), 0 20px 40px rgba(11, 40, 60, .12);
-    --anneau: 0 0 0 3px rgba(26, 91, 134, .30);
+    --ombre-2: 0 1px 3px 0 rgba(15, 23, 42, .1), 0 1px 2px -1px rgba(15, 23, 42, .1);
+    --ombre-3: 0 10px 15px -3px rgba(15, 23, 42, .1), 0 4px 6px -4px rgba(15, 23, 42, .1);
+    --anneau: 0 0 0 2px rgba(191, 219, 254, 1);
 
     /* --- Mouvement -------------------------------------------------------
        Court et decelere : sur une tablette, une transition longue donne
@@ -212,8 +228,10 @@ body::-webkit-scrollbar,
     background: var(--blanc);
     color: var(--gris-900);
     border-bottom: 1px solid var(--gris-200);
-    box-shadow: var(--ombre-1);
+    /* Pas d'ombre : au DME le bandeau ne survole pas la page, il la borde.
+       Un simple filet suffit a le detacher, et la page en parait plus calme. */
     position: sticky; top: 0; z-index: 30;
+    min-height: 64px;
 }
 
 .app-header__brand { display: flex; align-items: center; gap: var(--e3); min-width: 0; }
@@ -222,9 +240,9 @@ body::-webkit-scrollbar,
     display: flex; flex-direction: column; line-height: 1.2; min-width: 0;
 }
 .app-header__hospital {
-    font-weight: 700; font-size: var(--texte-md);
-    letter-spacing: -.01em; text-transform: uppercase;
-    color: var(--bleu-fonce);
+    font-weight: 600; font-size: var(--texte-lg);
+    letter-spacing: -.011em;
+    color: var(--gris-900);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .app-header__produit {
@@ -244,7 +262,7 @@ body::-webkit-scrollbar,
     line-height: 1.25; min-width: 0; max-width: 40vw;
 }
 .app-header__nom {
-    font-weight: 650; font-size: var(--texte-base); color: var(--gris-900);
+    font-weight: 600; font-size: var(--texte-base); color: var(--gris-900);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .app-header__role {
@@ -302,24 +320,37 @@ body::-webkit-scrollbar,
 /* ---------- Cartes ---------- */
 
 .card {
+    /* Le retrait interieur est une variable et non une valeur : l'en-tete a
+       besoin de le connaitre pour que son filet coure d'un bord a l'autre de
+       la carte, et il change sur petit ecran. */
+    --carte-pad: var(--e5);
+
     background: var(--blanc);
     border: 1px solid var(--gris-200);
     border-radius: var(--rayon-lg);
     box-shadow: var(--ombre-1);
-    padding: var(--e5);
+    padding: var(--carte-pad);
 }
 
 @media (max-width: 600px) {
-    .card { padding: var(--e4); border-radius: var(--rayon); }
+    .card { --carte-pad: var(--e4); }
 }
 
+/* L'en-tete se detache du corps par un filet qui traverse toute la carte,
+   comme au DME : le titre cesse d'etre une ligne de texte posee au-dessus du
+   contenu pour devenir un bandeau. Les marges negatives annulent le retrait
+   de la carte le temps de cette bande. */
 .card__head {
     display: flex; flex-wrap: wrap; gap: var(--e3);
-    align-items: center; justify-content: space-between; margin-bottom: var(--e4);
+    align-items: center; justify-content: space-between;
+    margin: calc(var(--carte-pad) * -1) calc(var(--carte-pad) * -1) var(--carte-pad);
+    padding: var(--e3) var(--carte-pad);
+    border-bottom: 1px solid var(--gris-200);
 }
 
 .card__title {
-    font-size: var(--texte-lg); font-weight: 650;
+    font-size: var(--texte-base); font-weight: 600;
+    color: var(--gris-900);
     margin-bottom: var(--e4);
 }
 .card__head .card__title { margin-bottom: 0; }
@@ -327,13 +358,13 @@ body::-webkit-scrollbar,
 /* Sous-titre en capitales fines : il separe deux blocs a l'interieur d'une
    carte sans entrer en concurrence avec son titre. */
 .card__subtitle {
-    font-size: var(--texte-xs); font-weight: 700;
-    text-transform: uppercase; letter-spacing: .06em;
+    font-size: var(--texte-xs); font-weight: 600;
+    text-transform: uppercase; letter-spacing: .04em;
     color: var(--gris-500);
     margin: var(--e6) 0 var(--e2);
 }
 
-.card--accent { border-left: 3px solid var(--bleu-vif); }
+.card--accent { border-left: 4px solid var(--bleu); }
 .card--danger { border-color: var(--rouge); }
 
 /* ---------- En-tete de carte : badge, titre, accroche ----------
@@ -345,10 +376,12 @@ body::-webkit-scrollbar,
 .card__badge {
     display: grid; place-items: center;
     flex: 0 0 auto;
-    width: 34px; height: 34px;
+    width: 32px; height: 32px;
     border-radius: var(--rayon-sm);
-    background: var(--bleu);
-    color: var(--blanc);
+    /* Aplat pale et icone bleue, non plus l'inverse : dix pastilles bleu plein
+       sur une page longue pesaient plus que le contenu qu'elles annoncaient. */
+    background: var(--bleu-pale);
+    color: var(--bleu);
 }
 
 .card__intitule { min-width: 0; }
@@ -358,8 +391,8 @@ body::-webkit-scrollbar,
    texte depasse quelques mots. */
 .card__accroche {
     margin: var(--e1) 0 0;
-    font-size: var(--texte-base);
-    color: var(--gris-700);
+    font-size: var(--texte-sm);
+    color: var(--gris-500);
     line-height: 1.45;
 }
 
@@ -372,27 +405,27 @@ body::-webkit-scrollbar,
 .notice {
     display: flex; gap: var(--e3); align-items: flex-start;
     padding: var(--e3) var(--e4);
-    border: 1px solid var(--sarcelle-clair);
-    border-left: 3px solid var(--sarcelle);
-    border-radius: var(--rayon);
+    border: 0;
+    border-left: 4px solid var(--sarcelle-vif);
+    border-radius: var(--rayon-sm);
     background: var(--sarcelle-clair);
     color: var(--gris-800);
 }
 
 .notice__icone { flex: 0 0 auto; color: var(--sarcelle); margin-top: 1px; }
-.notice__titre { margin: 0 0 var(--e1); font-weight: 650; color: var(--sarcelle-fonce); }
-.notice__texte { font-size: var(--texte-base); line-height: 1.5; }
+.notice__titre { margin: 0 0 var(--e1); font-weight: 600; color: var(--sarcelle-fonce); }
+.notice__texte { font-size: var(--texte-sm); line-height: 1.5; }
 .notice__texte p { margin: 0; }
 .notice__texte p + p { margin-top: var(--e2); }
 
 .notice--alerte {
-    border-color: var(--ambre-clair); border-left-color: var(--ambre);
+    border-left-color: #f59e0b;
     background: var(--ambre-clair);
 }
 .notice--alerte .notice__icone, .notice--alerte .notice__titre { color: var(--ambre); }
 
 .notice--blocage {
-    border-color: var(--rouge-clair); border-left-color: var(--rouge);
+    border-left-color: #ef4444;
     background: var(--rouge-clair);
 }
 .notice--blocage .notice__icone, .notice--blocage .notice__titre { color: var(--rouge); }
@@ -409,21 +442,45 @@ body::-webkit-scrollbar,
 .fil__liste {
     list-style: none; margin: 0 0 var(--e2); padding: 0;
     display: flex; flex-wrap: wrap; align-items: center; gap: var(--e1);
-    font-size: var(--texte-sm); color: var(--gris-500);
+    font-size: var(--texte-xs); color: var(--gris-500);
 }
 .fil__etape { display: inline-flex; align-items: center; gap: var(--e1); }
-.fil__separateur { color: var(--gris-400); }
-.fil__etape--courante { color: var(--gris-800); font-weight: 600; }
 
+/* Les maillons qui menent quelque part sont des boutons : une section n'a pas
+   d'adresse propre, c'est un etat de la barre laterale. Ils en gardent
+   l'apparence d'un lien — c'est ce que le lecteur attend d'un fil d'Ariane.
+
+   Leur cible tactile fait 30 px et non les 44 px de regle. C'est assume : le
+   fil est un raccourci, jamais le seul chemin — la barre laterale mene aux
+   memes sections et respecte, elle, les 44 px. Un fil a hauteur de doigt
+   ferait une bande de la hauteur d'un titre au-dessus de chaque page. */
+.fil__lien {
+    display: inline-flex; align-items: center;
+    min-height: 30px; padding: 0 var(--e1);
+    margin: 0 calc(var(--e1) * -1);
+    font: inherit; color: inherit;
+    background: transparent; border: 0; border-radius: var(--rayon-sm);
+    cursor: pointer;
+    transition: color var(--transition);
+}
+
+.fil__lien:hover { color: var(--bleu-fonce); text-decoration: underline; }
+
+.fil__separateur { color: var(--gris-300); }
+.fil__etape--courante { color: var(--gris-700); font-weight: 500; }
+
+/* Titre en ardoise sombre et non en bleu : au DME la couleur est reservee a
+   ce qui se clique. Un titre colore fait croire a un lien. */
 .page-header__titre {
-    font-size: var(--texte-2xl); font-weight: 700;
-    color: var(--bleu-fonce);
+    font-size: var(--texte-2xl); font-weight: 600;
+    letter-spacing: -.02em;
+    color: var(--gris-900);
 }
 
 .page-header__sous-titre {
-    margin: var(--e2) 0 0;
-    font-size: var(--texte-md);
-    color: var(--gris-700);
+    margin: var(--e1) 0 0;
+    font-size: var(--texte-base);
+    color: var(--gris-500);
     max-width: 68ch;
 }
 
@@ -478,13 +535,15 @@ body::-webkit-scrollbar,
 }
 .chiffres__bloc {
     display: flex; flex-direction: column; gap: var(--e1);
-    padding: var(--e3) var(--e4);
-    background: var(--bleu-pale);
+    padding: var(--e4);
+    background: var(--blanc);
     border: 1px solid var(--gris-200);
-    border-radius: var(--rayon);
+    border-radius: var(--rayon-lg);
+    transition: border-color var(--transition);
 }
-.chiffres__valeur { font-size: var(--texte-xl); font-weight: 700; color: var(--bleu-fonce); }
-.chiffres__libelle { font-size: var(--texte-sm); color: var(--gris-700); line-height: 1.35; }
+.chiffres__bloc:hover { border-color: var(--bleu-clair); }
+.chiffres__valeur { font-size: var(--texte-2xl); font-weight: 600; color: var(--gris-900); line-height: 1.15; }
+.chiffres__libelle { font-size: var(--texte-xs); color: var(--gris-500); line-height: 1.35; }
 
 /* ---------- Jauge de note ----------
    La longueur encode la valeur, la couleur ne la juge pas. Peindre en rouge
@@ -513,15 +572,15 @@ body::-webkit-scrollbar,
     border-radius: var(--rayon-pilule);
 }
 
-.jauge__note { flex: 0 0 auto; font-weight: 650; color: var(--gris-900); }
+.jauge__note { flex: 0 0 auto; font-weight: 600; color: var(--gris-900); }
 
 /* Bloc de commandes : il se lit, il se copie, il ne se modifie pas. */
 .code-bloc {
     margin: var(--e4) 0;
     padding: var(--e3) var(--e4);
     overflow-x: auto;
-    background: var(--bleu-nuit);
-    color: #e6eef6;
+    background: var(--gris-900);
+    color: var(--gris-200);
     border-radius: var(--rayon);
     font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
     font-size: var(--texte-sm);
@@ -546,7 +605,9 @@ body::-webkit-scrollbar,
 .field-row .field { flex: 1 1 150px; }
 .field-row .field--wide { flex: 2 1 200px; }
 
-.field label { font-weight: 600; font-size: var(--texte-base); color: var(--gris-800); }
+/* Libelle petit, gris et discret : au DME c'est le champ qui porte le regard,
+   pas son intitule. */
+.field label { font-weight: 500; font-size: var(--texte-xs); color: var(--gris-500); }
 .field__hint { font-weight: 400; color: var(--gris-500); font-size: var(--texte-sm); }
 .field__error { color: var(--rouge); font-size: var(--texte-sm); font-weight: 500; margin: var(--e1) 0 0; }
 
@@ -561,6 +622,7 @@ input[type="datetime-local"], select, textarea {
     background: var(--blanc);
     border: 1px solid var(--gris-300);
     border-radius: var(--rayon-sm);
+    box-shadow: var(--ombre-1);
     width: 100%;
     transition: border-color var(--transition), box-shadow var(--transition);
 }
@@ -577,9 +639,11 @@ input:focus, select:focus, textarea:focus {
     box-shadow: var(--anneau);
 }
 
+input:disabled, select:disabled, textarea:disabled { background: var(--gris-100); }
+
 select {
     appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234a555d' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23334155' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right var(--e3) center;
     background-size: 1.1em;
@@ -602,8 +666,8 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 
 .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: var(--e2);
-    min-height: var(--touch); padding: var(--e2) var(--e5);
-    font: inherit; font-size: var(--texte-base); font-weight: 600;
+    min-height: 40px; padding: var(--e2) var(--e4);
+    font: inherit; font-size: var(--texte-base); font-weight: 500;
     line-height: 1.2;
     border: 1px solid transparent; border-radius: var(--rayon-sm);
     cursor: pointer; text-align: center; text-decoration: none;
@@ -611,40 +675,44 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
                 color var(--transition), box-shadow var(--transition), transform var(--transition);
 }
 
-/* Le bouton se souleve d'un pixel au survol et se repose au clic. C'est le
-   seul mouvement de l'interface : il suffit a rendre l'action tangible. */
-.btn:hover:not([disabled]) { transform: translateY(-1px); }
-.btn:active:not([disabled]) { transform: translateY(0); transition-duration: 60ms; }
+/* Plus de soulevement au survol : le bouton change de teinte, rien d'autre.
+   Un bouton qui bouge attire l'oeil a chaque passage de souris, et sur une
+   page qui en compte vingt cela fait une interface nerveuse. Le DME s'en
+   passe, et l'ecran y gagne en calme. */
+.btn:active:not([disabled]) { transition-duration: 60ms; }
 
-.btn[disabled] { opacity: .55; cursor: not-allowed; transform: none; }
+.btn[disabled] { opacity: .5; cursor: not-allowed; }
 
 .btn--primary {
     background: var(--bleu); color: var(--blanc);
-    box-shadow: var(--ombre-1);
 }
-.btn--primary:hover:not([disabled]) { background: var(--bleu-vif); box-shadow: var(--ombre-2); }
+.btn--primary:hover:not([disabled]) { background: var(--bleu-fonce); }
 
+/* Aplat bleu pale : une action importante mais qui n'est pas L'action de la
+   page. Il y a un seul bouton plein par ecran, rarement deux. */
 .btn--secondary {
-    background: var(--bleu-clair); color: var(--bleu-fonce);
+    background: var(--bleu-pale); color: var(--bleu-fonce);
     border-color: transparent;
 }
-.btn--secondary:hover:not([disabled]) { background: var(--bleu-clair); border-color: var(--gris-300); }
+.btn--secondary:hover:not([disabled]) { background: var(--bleu-clair); }
 
-/* Bordure discrete au repos, franche au survol : au repos le bouton fantome
-   ne doit pas peser autant qu'une action principale. */
+/* Le bouton de tous les jours : blanc, borde, sobre. Il porte l'essentiel des
+   actions de l'application — quatre-vingts occurrences dans les gabarits — et
+   c'est a ce titre qu'il garde sa bordure la ou le DME nomme « fantome » un
+   bouton sans contour : sans elle, la moitie des actions disparaitraient. */
 .btn--ghost {
-    background: transparent; color: var(--gris-800);
+    background: var(--blanc); color: var(--gris-700);
     border-color: var(--gris-300);
 }
-.btn--ghost:hover:not([disabled]) { background: var(--gris-100); border-color: var(--gris-400); }
+.btn--ghost:hover:not([disabled]) { background: var(--gris-50); }
 
 .btn--danger { background: var(--rouge); color: var(--blanc); }
-.btn--danger:hover:not([disabled]) { background: #b52528; box-shadow: var(--ombre-2); }
+.btn--danger:hover:not([disabled]) { background: #b91c1c; }
 
 .btn--close { background: var(--vert); color: var(--blanc); }
-.btn--close:hover:not([disabled]) { background: var(--sarcelle-vif); box-shadow: var(--ombre-2); }
+.btn--close:hover:not([disabled]) { background: var(--sarcelle-fonce); }
 
-.btn--small { min-height: 36px; padding: var(--e1) var(--e3); font-size: var(--texte-sm); }
+.btn--small { min-height: 36px; padding: var(--e1) var(--e3); font-size: var(--texte-xs); }
 .btn--block { width: 100%; }
 
 .btn-row { display: flex; flex-wrap: wrap; gap: var(--e2); align-items: center; }
@@ -656,9 +724,9 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
     display: flex; align-items: flex-start; gap: var(--e3);
     width: 100%; max-width: var(--largeur-max); margin: var(--e4) auto 0;
     padding: var(--e3) var(--e4);
-    border-radius: var(--rayon);
-    border: 1px solid transparent;
-    border-left-width: 3px;
+    border-radius: var(--rayon-sm);
+    border: 0;
+    border-left: 4px solid transparent;
     font-size: var(--texte-base); font-weight: 500;
     animation: alerte-entree var(--duree-lente) var(--courbe);
 }
@@ -668,9 +736,9 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
     to { opacity: 1; transform: none; }
 }
 
-.alert--error { background: var(--rouge-clair); border-color: var(--rouge); color: #7d191c; }
-.alert--success { background: var(--vert-clair); border-color: var(--vert); color: var(--sarcelle-fonce); margin-bottom: var(--e4); }
-.alert--warning { background: var(--ambre-clair); border-color: var(--ambre); color: #834e00; }
+.alert--error { background: var(--rouge-clair); border-left-color: #ef4444; color: #991b1b; }
+.alert--success { background: var(--vert-clair); border-left-color: var(--sarcelle-vif); color: var(--sarcelle-fonce); margin-bottom: var(--e4); }
+.alert--warning { background: var(--ambre-clair); border-left-color: #f59e0b; color: #92400e; }
 
 .alert__dismiss {
     margin-left: auto; flex: 0 0 auto;
@@ -687,14 +755,14 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .table-wrap {
     overflow-x: auto;
     border: 1px solid var(--gris-200);
-    border-radius: var(--rayon);
+    border-radius: var(--rayon-lg);
     /* Ombre portee sur les bords quand le tableau deborde : sur tablette,
        rien n'indiquait qu'il restait des colonnes a droite. */
     background:
         linear-gradient(90deg, var(--blanc) 30%, rgba(255, 255, 255, 0)) left / 40px 100% no-repeat,
         linear-gradient(270deg, var(--blanc) 30%, rgba(255, 255, 255, 0)) right / 40px 100% no-repeat,
-        radial-gradient(farthest-side at 0 50%, rgba(11, 40, 60, .12), transparent) left / 14px 100% no-repeat,
-        radial-gradient(farthest-side at 100% 50%, rgba(11, 40, 60, .12), transparent) right / 14px 100% no-repeat,
+        radial-gradient(farthest-side at 0 50%, rgba(15, 23, 42, .1), transparent) left / 14px 100% no-repeat,
+        radial-gradient(farthest-side at 100% 50%, rgba(15, 23, 42, .1), transparent) right / 14px 100% no-repeat,
         var(--blanc);
     background-attachment: local, local, scroll, scroll, local;
 }
@@ -702,19 +770,21 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 .table { width: 100%; border-collapse: collapse; min-width: 560px; }
 
 .table th, .table td {
-    padding: var(--e3);
+    padding: var(--e3) var(--e4);
     text-align: left;
-    border-bottom: 1px solid var(--gris-200);
+    border-bottom: 1px solid var(--gris-100);
     font-size: var(--texte-base);
+    color: var(--gris-700);
 }
 
 .table thead th {
     position: sticky; top: 0; z-index: 1;
     background: var(--gris-50);
-    font-size: var(--texte-xs); font-weight: 700;
-    text-transform: uppercase; letter-spacing: .06em;
+    font-size: var(--texte-xs); font-weight: 600;
+    text-transform: uppercase; letter-spacing: .04em;
     color: var(--gris-500);
-    border-bottom-color: var(--gris-300);
+    white-space: nowrap;
+    border-bottom: 1px solid var(--gris-200);
 }
 
 .table tbody tr { transition: background-color var(--transition); }
@@ -725,17 +795,19 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 
 /* ---------- Pastilles d'etat ---------- */
 
+/* Pilule en capsule, en minuscules et sans lettrage etire : la pastille du
+   DME se lit comme un mot, pas comme une etiquette de dossier. Les capitales
+   espacees d'avant criaient un peu fort a cote d'un tableau. */
 .badge {
-    display: inline-flex; align-items: center;
-    padding: var(--e1) var(--e2);
-    border-radius: var(--rayon-sm);
-    font-size: var(--texte-xs); font-weight: 700;
-    text-transform: uppercase; letter-spacing: .04em;
+    display: inline-flex; align-items: center; gap: var(--e1);
+    padding: 2px var(--e2);
+    border-radius: var(--rayon-pilule);
+    font-size: var(--texte-xs); font-weight: 500;
     white-space: nowrap;
 }
 .badge--waiting { background: var(--ambre-clair); color: var(--ambre); }
-.badge--called { background: var(--vert-clair); color: var(--vert); }
-.badge--closed { background: var(--gris-200); color: var(--gris-700); }
+.badge--called { background: var(--vert-clair); color: var(--sarcelle-fonce); }
+.badge--closed { background: var(--gris-100); color: var(--gris-700); }
 .badge--neutral { background: var(--gris-100); color: var(--gris-700); }
 
 /* ---------- Ticket imprime a l'ecran ---------- */
@@ -766,7 +838,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
     padding: var(--e2) var(--e3);
     background: var(--blanc);
     border: 1px solid var(--gris-200);
-    border-left: 3px solid var(--ambre);
+    border-left: 4px solid var(--ambre);
     border-radius: var(--rayon);
     transition: border-color var(--transition), box-shadow var(--transition);
 }
@@ -842,7 +914,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
     border-radius: var(--rayon);
     animation: depliage var(--duree-lente) var(--courbe);
 }
-.referral-form__title { margin: 0 0 var(--e2); font-weight: 650; font-size: var(--texte-base); }
+.referral-form__title { margin: 0 0 var(--e2); font-weight: 600; font-size: var(--texte-base); }
 
 @keyframes depliage {
     from { opacity: 0; transform: translateY(-6px); }
@@ -922,7 +994,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
     display: flex; flex-wrap: wrap; gap: var(--e2);
     align-items: baseline; justify-content: space-between; margin: 0;
 }
-.timeline__type { font-weight: 650; font-size: var(--texte-base); }
+.timeline__type { font-weight: 600; font-size: var(--texte-base); }
 .timeline__head time { color: var(--gris-500); font-size: var(--texte-sm); font-variant-numeric: tabular-nums; }
 .timeline__body { margin: var(--e1) 0; font-size: var(--texte-base); }
 .timeline__meta { margin: 0; font-size: var(--texte-sm); color: var(--gris-500); }
@@ -966,9 +1038,11 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
    neon, et un ecran clair y devient un projecteur. Ce sont donc les teintes
    qui s'accordent a la marque, pas le fond.
 
-   Le numero appele passe du bleu ciel a une sarcelle claire : c'est la teinte
-   de la marque portee au niveau de luminosite qu'exige un fond sombre — la
-   sarcelle nominale (#16806a) serait illisible a cinq metres. */
+   Le numero appele passe du bleu ciel a un vert clair : c'est la teinte de la
+   marque portee au niveau de luminosite qu'exige un fond sombre — le vert
+   nominal serait illisible a cinq metres. Ce bloc garde ses valeurs en dur et
+   ne suit pas la palette : elles sont reglees pour une lecture de loin, pas
+   pour s'accorder a une page. */
 .board--fullscreen .board__service { background: #1f2c31; border-color: #35474e; }
 .board--fullscreen .board__service-name { color: #cfd8dd; font-size: 1.3rem; }
 .board--fullscreen .board__current { color: #5fe3bd; font-size: 4.5rem; }
@@ -1021,13 +1095,13 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
    differents sur le meme ecran donnaient une page mal assemblee. */
 .companions-fieldset {
     border: 1px solid var(--gris-200);
-    background: var(--gris-50);
-    border-radius: var(--rayon);
+    background: var(--blanc);
+    border-radius: var(--rayon-lg);
     padding: var(--e4);
 }
 .companions-fieldset legend {
-    font-weight: 700; padding: 0 var(--e2);
-    font-size: var(--texte-xs); text-transform: uppercase; letter-spacing: .06em;
+    font-weight: 600; padding: 0 var(--e2);
+    font-size: var(--texte-xs); text-transform: uppercase; letter-spacing: .04em;
     color: var(--gris-500);
 }
 .companions-fieldset input { background: var(--blanc); }
@@ -1176,8 +1250,8 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
     display: flex; align-items: center; gap: var(--e2);
     width: 100%; min-height: var(--touch); padding: var(--e2) var(--e3);
     font: inherit; font-size: var(--texte-base); font-weight: 600; text-align: left;
-    color: var(--bleu-fonce); background: var(--blanc);
-    border: 1px solid var(--gris-200); border-radius: var(--rayon);
+    color: var(--gris-800); background: var(--blanc);
+    border: 1px solid var(--gris-200); border-radius: var(--rayon-lg);
     box-shadow: var(--ombre-1); cursor: pointer;
     transition: border-color var(--transition), box-shadow var(--transition);
 }
@@ -1194,7 +1268,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
     display: none;
     background: var(--blanc); border: 1px solid var(--gris-200);
     border-radius: var(--rayon-lg); box-shadow: var(--ombre-1);
-    padding: var(--e2) var(--e2) var(--e4);
+    padding: var(--e3) var(--e3) var(--e4);
 }
 
 /* Ouvert sur petit ecran, le tiroir defile lui aussi pour son compte : sans
@@ -1211,7 +1285,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 
 .tabnav__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
 .tabnav__list--nested {
-    margin: 2px 0 var(--e1) var(--e3);
+    margin: 2px 0 var(--e1) var(--e5);
     padding-left: var(--e2);
     border-left: 1px solid var(--gris-200);
 }
@@ -1223,12 +1297,13 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
     position: relative;
     display: flex; align-items: center; gap: var(--e2);
     width: 100%; min-height: var(--touch); padding: var(--e2) var(--e3);
-    font: inherit; font-size: var(--texte-base); text-align: left; color: var(--gris-800);
+    font: inherit; font-size: var(--texte-base); font-weight: 500;
+    text-align: left; color: var(--gris-600);
     background: transparent; border: 0; border-radius: var(--rayon-sm); cursor: pointer;
     transition: background-color var(--transition), color var(--transition);
 }
 
-.tabnav__group { font-weight: 600; }
+.tabnav__group { font-weight: 500; }
 .tabnav__link:hover, .tabnav__group:hover { background: var(--gris-100); color: var(--gris-900); }
 
 /* Intitule de famille : pas un element cliquable, seulement le nom du bloc
@@ -1238,24 +1313,43 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
     padding: var(--e4) var(--e3) var(--e1);
     font-size: var(--texte-xs);
     font-weight: 700;
-    letter-spacing: .09em;
+    letter-spacing: .06em;
     text-transform: uppercase;
     color: var(--gris-400);
 }
 .tabnav__famille:first-child { padding-top: var(--e2); }
 
-/* L'icone ne porte jamais sa couleur : elle suit celle du libelle, y compris
-   quand l'entree devient active et passe en blanc sur marine. */
-.tabnav__icone { flex: 0 0 auto; opacity: .82; }
+/* L'icone ne porte jamais sa couleur : elle suit celle du libelle. */
+.tabnav__icone { flex: 0 0 auto; }
 
-/* L'entree active est une pastille pleine, et non une teinte pale barree d'un
-   trait : sur une barre de treize entrees, une nuance claire ne se distingue
-   plus d'un survol. */
+/* L'entree active passe du pave marine plein a l'aplat bleu pale du DME :
+   fond bleu tres clair, texte et icone en bleu fonce. La difference avec un
+   survol gris tient a la teinte et non a l'intensite, et elle se lit tres bien
+   parce que c'est la seule tache bleue de la colonne.
+
+   Ce que l'ancien pave plein faisait mieux — se reperer d'un coup d'oeil parmi
+   treize entrees — est repris par la graisse du libelle, qui passe a 600 la ou
+   les autres restent a 500. */
 .tabnav__link--active {
-    background: var(--bleu); color: var(--blanc); font-weight: 600;
+    background: var(--bleu-pale); color: var(--bleu-fonce); font-weight: 600;
 }
-.tabnav__link--active:hover { background: var(--bleu-fonce); color: var(--blanc); }
-.tabnav__link--active .tabnav__icone { opacity: 1; }
+.tabnav__link--active:hover { background: var(--bleu-clair); color: var(--bleu-fonce); }
+
+/* Meme apparence, mais posee par Livewire pendant que la section demandee
+   charge : le repere se deplace au clic et non a la reponse du serveur. Sur
+   une liaison lente, c'est la difference entre une interface qui repond et une
+   interface qui semble avoir ignore le clic. */
+.tabnav__link--attente {
+    background: var(--bleu-pale); color: var(--bleu-fonce); font-weight: 600;
+}
+
+/* Le temps du chargement, l'entree qu'on quitte s'efface : sans cela deux
+   entrees paraissaient actives en meme temps, et on ne savait plus laquelle
+   repondait. Les navigateurs sans `:has()` gardent les deux reperes pendant la
+   fraction de seconde que dure l'echange — desagreable, pas cassant. */
+.tabnav:has(.tabnav__link--attente) .tabnav__link--active:not(.tabnav__link--attente) {
+    background: transparent; color: var(--gris-600); font-weight: 500;
+}
 
 /* Le chevron du groupe part a droite : il annonce le depliage, pas l'entree —
    celle-ci a deja son icone a gauche. */
@@ -1268,7 +1362,38 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 
 /* Le panneau actif : une seule section a la fois, plus de defilement a
    travers toutes les sections empilees. */
-.workspace__panel { min-width: 0; display: flex; flex-direction: column; gap: var(--e4); }
+.workspace__panel {
+    position: relative;
+    min-width: 0; display: flex; flex-direction: column; gap: var(--e4);
+}
+
+/* Filet de progression en haut du panneau pendant qu'une section charge.
+   Il n'apparait qu'au-dela de cent millisecondes — en deca, la section est
+   deja la et un eclair de barre ne ferait que clignoter. Il ne mesure pas
+   l'avancement, qu'on ne connait pas : il dit seulement « c'est parti ». */
+.workspace__progress {
+    position: absolute; inset: -6px 0 auto 0;
+    height: 2px; border-radius: var(--rayon-pilule);
+    overflow: hidden;
+    background: var(--bleu-clair);
+}
+
+.workspace__progress::after {
+    content: '';
+    display: block; height: 100%; width: 40%;
+    border-radius: inherit;
+    background: var(--bleu);
+    animation: progression 900ms var(--courbe) infinite;
+}
+
+@keyframes progression {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(350%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .workspace__progress::after { animation: none; width: 100%; opacity: .5; }
+}
 .workspace__panel .page-title { margin-bottom: 0; }
 
 /* A partir de la tablette en paysage, la barre laterale devient une colonne
@@ -1290,6 +1415,13 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
         display: block;
         position: sticky;
         top: calc(var(--e4) + 64px);
+        /* La colonne occupe toute la hauteur visible, comme au DME, et ne
+           s'arrete pas sous sa derniere entree : une barre qui s'interrompt au
+           tiers de la page se lit comme une carte posee la, pas comme le bord
+           gauche de l'espace de travail. Hauteur minimale ET maximale a la
+           meme valeur : elle remplit l'ecran quand les entrees sont peu
+           nombreuses, et defile pour son compte quand elles debordent. */
+        min-height: calc(100dvh - 64px - var(--e8));
         max-height: calc(100dvh - 64px - var(--e8));
         overflow-y: auto;
         overscroll-behavior: contain;
@@ -1379,9 +1511,6 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 /* ---------- Zone dangereuse : suppression definitive de dossier ---------- */
 .card--danger { border-left: 4px solid var(--rouge); }
 .card--danger .card__title { color: var(--rouge); }
-
-.btn--danger { background: var(--rouge); color: var(--blanc); }
-.btn--danger:hover { background: #8a1b1b; }
 
 .deletion__confirm {
     margin-top: 1rem;
@@ -2125,9 +2254,9 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
     overflow-y: auto;
     background: #fff;
     color: var(--gris-900);
-    border: 1px solid var(--gris-300);
-    border-radius: var(--rayon);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, .18);
+    border: 1px solid var(--gris-200);
+    border-radius: var(--rayon-lg);
+    box-shadow: var(--ombre-3);
 }
 
 .bell__head {
@@ -2135,7 +2264,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
     align-items: center;
     justify-content: space-between;
     padding: .6rem .8rem;
-    border-bottom: 1px solid var(--gris-300);
+    border-bottom: 1px solid var(--gris-200);
 }
 
 .bell__item {
@@ -2151,17 +2280,17 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
 
 /* Une notification non lue se distingue par un liseré, pas par une couleur de
    fond : le panneau reste lisible quand tout est neuf. */
-.bell__item--unread { border-left: 3px solid var(--bleu); }
+.bell__item--unread { border-left: 4px solid var(--bleu); }
 
 .bell__type {
     font-size: .7rem;
-    font-weight: 700;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: .03em;
-    color: var(--gris-700);
+    letter-spacing: .04em;
+    color: var(--gris-500);
 }
 .bell__title { font-size: .92rem; }
-.bell__time { font-size: .75rem; color: var(--gris-700); }
+.bell__time { font-size: .75rem; color: var(--gris-500); }
 
 /* Carte de profil (v3.2.3, point 3). Meme ancrage que la cloche : le panneau
    flotte sous l'avatar, la barre de marque garde sa hauteur. */
@@ -2195,9 +2324,9 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
     width: min(23rem, calc(100vw - 2rem));
     background: #fff;
     color: var(--gris-900);
-    border: 1px solid var(--gris-300);
-    border-radius: var(--rayon);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, .18);
+    border: 1px solid var(--gris-200);
+    border-radius: var(--rayon-lg);
+    box-shadow: var(--ombre-3);
 }
 
 /* En-tete de la carte : avatar, nom, fonction. La fonction monte a cote du
@@ -2303,7 +2432,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
     font-size: var(--texte-base);
     animation: depliage var(--duree-lente) var(--courbe);
 }
-.bulkbar span { font-weight: 650; margin-right: auto; }
+.bulkbar span { font-weight: 600; margin-right: auto; }
 
 /* La colonne des cases reste etroite : c'est une poignee, pas une donnee. */
 .table__check { width: 2.4rem; text-align: center; }
@@ -2314,16 +2443,16 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
    comme une colonne de neuf champs qu'il faut derouler en entier. */
 .formset {
     border: 1px solid var(--gris-200);
-    background: var(--gris-50);
-    border-radius: var(--rayon);
+    background: var(--blanc);
+    border-radius: var(--rayon-lg);
     padding: var(--e4);
     display: flex;
     flex-direction: column;
     gap: var(--e4);
 }
 .formset legend {
-    font-weight: 700; padding: 0 var(--e2);
-    font-size: var(--texte-xs); text-transform: uppercase; letter-spacing: .06em;
+    font-weight: 600; padding: 0 var(--e2);
+    font-size: var(--texte-xs); text-transform: uppercase; letter-spacing: .04em;
     color: var(--gris-500);
 }
 .formset input, .formset select, .formset textarea { background: var(--blanc); }
@@ -2437,12 +2566,12 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
     text-align: center;
     font-size: .78rem;
     line-height: 1.35;
-    color: var(--gris-500, #6d7880);
-    border-top: 1px solid var(--gris-200, #e6ebee);
+    color: var(--gris-500, #64748b);
+    border-top: 1px solid var(--gris-200, #e2e8f0);
 }
 
 .app-footer p { margin: 0; }
-.app-footer__produit strong { font-weight: 600; color: var(--gris-700, #454f56); }
+.app-footer__produit strong { font-weight: 600; color: var(--gris-700, #334155); }
 .app-footer__rights { opacity: .85; }
 
 .app-footer a {
@@ -2460,7 +2589,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
     /* Le pied tenant desormais le bas de l'ecran, il passe au-dessus des
        cartes : sa discretion vient de la couleur du texte, plus d'une
        transparence qui laisserait defiler la file au travers. */
-    background: var(--gris-900, #14191d);
+    background: var(--gris-900, #0f172a);
     color: #78848c;
     padding: .3rem .5rem;
     font-size: .72rem;
@@ -2487,7 +2616,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
     font-weight: 600;
 }
 .sms-tally--calme { background: var(--vert-clair); border-color: var(--vert); color: var(--sarcelle-fonce); }
-.sms-tally--alerte { background: var(--rouge-clair); border-color: var(--rouge); color: #7d191c; }
+.sms-tally--alerte { background: var(--rouge-clair); border-color: var(--rouge); color: #991b1b; }
 .sms-tally__nombre { font-size: 1.5rem; font-weight: 800; line-height: 1; }
 .sms-tally .btn { margin-left: auto; }
 
@@ -2503,7 +2632,7 @@ fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
     padding: var(--e4);
     border-radius: var(--rayon);
     border: 1px solid var(--ambre); border-left-width: 3px;
-    background: var(--ambre-clair); color: #834e00;
+    background: var(--ambre-clair); color: #92400e;
 }
 .doublon__titre { margin: 0 0 var(--e2); font-size: var(--texte-lg); font-weight: 700; }
 .doublon__liste { list-style: none; margin: var(--e3) 0; padding: 0; display: grid; gap: var(--e2); }

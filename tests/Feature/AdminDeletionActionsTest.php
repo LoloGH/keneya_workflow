@@ -11,6 +11,8 @@ use App\Livewire\Admin\StaffManager;
 use App\Livewire\Admin\StaffTypeManager;
 use App\Models\CareTaskType;
 use App\Models\Doctor;
+use App\Models\FeedbackEntry;
+use App\Models\Hospitalization;
 use App\Models\Patient;
 use App\Models\PatientHistory;
 use App\Models\Payment;
@@ -20,6 +22,7 @@ use App\Models\Schedule;
 use App\Models\Service;
 use App\Models\ServiceKind;
 use App\Models\StaffMember;
+use App\Models\StaffNotification;
 use App\Models\StaffType;
 use App\Models\User;
 use App\Models\Visit;
@@ -28,8 +31,10 @@ use App\Services\SmsGateway;
 use App\Services\SmsSendResult;
 use App\Support\Audit;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use Livewire\Livewire;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Spatie\Activitylog\Models\Activity;
 use Tests\TestCase;
 
@@ -290,6 +295,148 @@ class AdminDeletionActionsTest extends TestCase
 
         // Un planning est la propriete du compte, pas du dossier patient.
         $this->assertSame(0, Schedule::where('user_id', $receptionist->getKey())->count());
+    }
+
+    /**
+     * Constate en administration : « 500 SERVER ERROR » a la suppression d'un
+     * personnel, sans un mot d'explication.
+     *
+     * Une notification est la propriete du compte — c'est sa cloche — mais
+     * `staff_notifications.user_id` est une cle etrangere en RESTRICT, et rien
+     * ne la vidait. Tout compte ayant recu ne serait-ce qu'une notification
+     * refusait donc d'etre supprime : c'est-a-dire, en pratique, tout compte
+     * qui a servi une journee.
+     */
+    public function test_la_cloche_part_avec_le_compte_supprime(): void
+    {
+        $receptionist = $this->makeReceptionist();
+        $rattachement = Receptionist::where('user_id', $receptionist->getKey())->firstOrFail();
+
+        StaffNotification::create([
+            'user_id' => $receptionist->getKey(),
+            'type' => StaffNotification::TYPE_NEW_QUEUE_ENTRY,
+            'title' => 'Un patient attend a l accueil.',
+            'link' => '/reception',
+        ]);
+
+        Livewire::actingAs($this->makeAdmin())
+            ->test(StaffManager::class)
+            ->call('delete', 'receptionist:'.$rattachement->getKey());
+
+        $this->assertSame(0, StaffNotification::where('user_id', $receptionist->getKey())->count());
+        $this->assertNull(User::find($receptionist->getKey()));
+    }
+
+    /**
+     * Toutes les traces qui retiennent un compte disent lesquelles.
+     *
+     * Le refus lui-meme n'est pas le defaut — il est voulu, et documente le
+     * parcours des patients. Ce qui l'etait, c'est qu'une bonne moitie des
+     * colonnes concernees n'etait pas listee : la base refusait alors la
+     * suppression a la toute derniere seconde, en 500, la ou l'admin aurait
+     * du lire une phrase.
+     *
+     * @return array<string, array{0: string, 1: string}>
+     */
+    public static function tracesQuiRetiennentUnCompte(): array
+    {
+        return [
+            'note de releve' => ['handoff_notes', 'written_by_user_id'],
+            'visiteur enregistre' => ['visitors', 'registered_by_user_id'],
+            'diffusion de SMS' => ['broadcast_messages', 'sent_by_user_id'],
+            'retour depose' => ['feedback_entries', 'submitted_by_user_id'],
+            'retour traite' => ['feedback_entries', 'resolved_by_user_id'],
+            'note de satisfaction' => ['feedback_survey_ratings', 'user_id'],
+            'soin annule' => ['care_tasks', 'cancelled_by_user_id'],
+        ];
+    }
+
+    #[DataProvider('tracesQuiRetiennentUnCompte')]
+    public function test_chaque_trace_du_compte_est_annoncee_avant_le_refus(string $table, string $colonne): void
+    {
+        $receptionist = $this->makeReceptionist();
+        $rattachement = Receptionist::where('user_id', $receptionist->getKey())->firstOrFail();
+
+        // La colonne est renseignee directement : ce qui est teste ici n'est
+        // pas la facon dont la trace nait, mais le fait que l'action la voie.
+        DB::table($table)->insert($this->ligneMinimale($table, $colonne, $receptionist->getKey()));
+
+        $this->expectException(InvalidArgumentException::class);
+
+        app(DeleteStaffAccount::class)->execute($rattachement, $this->makeAdmin());
+    }
+
+    /**
+     * Le strict minimum pour qu'une ligne de cette table existe et designe ce
+     * compte. Les colonnes obligatoires seulement — le contenu n'a aucune
+     * importance pour ce que ce test verifie.
+     *
+     * @return array<string, mixed>
+     */
+    private function ligneMinimale(string $table, string $colonne, int $userId): array
+    {
+        $base = [$colonne => $userId, 'created_at' => now(), 'updated_at' => now()];
+
+        return match ($table) {
+            'handoff_notes' => $base + [
+                'hospitalization_id' => $this->hospitalisation()->getKey(),
+                'content' => 'Nuit calme.',
+            ],
+            'visitors' => $base + [
+                'visitor_code' => 'VIS-TEST-1',
+                'name' => 'Awa Traore',
+                'service_id' => Service::factory()->create()->getKey(),
+            ],
+            'broadcast_messages' => $base + [
+                'content' => 'Fermeture exceptionnelle.',
+                'target_type' => 'all_patients',
+                'recipient_count' => 0,
+            ],
+            'feedback_entries' => $base + [
+                'type' => FeedbackEntry::TYPE_INCIDENT,
+                'content' => 'Ascenseur en panne.',
+                'status' => FeedbackEntry::STATUS_NEW,
+            ],
+            'feedback_survey_ratings' => $base + [
+                'feedback_entry_id' => FeedbackEntry::create([
+                    'type' => FeedbackEntry::TYPE_SURVEY,
+                    'content' => 'Enquete.',
+                    'status' => FeedbackEntry::STATUS_NEW,
+                ])->getKey(),
+                'post_label' => 'Accueil',
+                'rating' => 4,
+            ],
+            'care_tasks' => $base + [
+                'hospitalization_id' => ($sejour = $this->hospitalisation())->getKey(),
+                'care_task_type_id' => CareTaskType::create(['name' => 'Pansement'])->getKey(),
+                // Prescrit par le medecin qui a admis, pas par le compte que
+                // l'on cherche a supprimer : c'est bien l'annulation qui doit
+                // retenir ce compte, et elle seule.
+                'prescribed_by_doctor_id' => $sejour->admitted_by_doctor_id,
+                'instructions' => 'Refection.',
+                'scheduled_at' => now(),
+                'status' => 'cancelled',
+            ],
+            default => $base,
+        };
+    }
+
+    /** Un sejour quelconque, support des soins et des notes de releve. */
+    private function hospitalisation(): Hospitalization
+    {
+        $service = Service::factory()->create();
+        $patient = Patient::factory()->create();
+
+        return Hospitalization::create([
+            'patient_id' => $patient->getKey(),
+            'service_id' => $service->getKey(),
+            'visit_id' => $this->makeVisit($service, [], $patient)->getKey(),
+            // Un sejour porte toujours le medecin qui a admis : c'est un autre
+            // compte que celui dont on teste la suppression.
+            'admitted_by_doctor_id' => $this->makeDoctor($service)->getKey(),
+            'admitted_at' => now(),
+            'status' => Hospitalization::STATUS_ACTIVE,
+        ]);
     }
 
     public function test_un_membre_a_interface_dediee_est_supprimable(): void

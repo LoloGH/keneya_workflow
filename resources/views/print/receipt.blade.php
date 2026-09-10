@@ -6,24 +6,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Reçu — {{ $hospitalName }}</title>
     <style>
-        body { margin: 0; padding: 12px; font-family: "DejaVu Sans", system-ui, sans-serif; background: #eef3f8;
-               color: #10171c; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+        body { margin: 0; padding: 12px; font-family: "DejaVu Sans", system-ui, sans-serif; background: #f1f5f9;
+               color: #1e293b; display: flex; flex-direction: column; align-items: center; gap: 14px; }
         .ticket { width: 100%; max-width: 44ch; background: #fff; padding: 14px 16px;
-                  border: 1px solid #ccd4d9; border-radius: 6px; }
+                  border: 1px solid #cbd5e1; border-radius: 6px; }
         /* Le monogramme coiffe le ticket. Volontairement petit : sur un rouleau
            thermique il sort en niveaux de gris, il doit rester net. */
         .ticket__logo { display: block; width: 52px; height: auto; margin: 0 auto 6px; }
         .ticket__hospital { margin: 0; font-size: 1rem; font-weight: 700; text-align: center; }
-        .ticket__product { margin: 2px 0 10px; font-size: .72rem; text-align: center; color: #5a656d; }
-        .ticket__rule { border: 0; border-top: 1px dashed #9aa5ac; margin: 10px 0; }
+        .ticket__product { margin: 2px 0 10px; font-size: .72rem; text-align: center; color: #64748b; }
+        .ticket__rule { border: 0; border-top: 1px dashed #94a3b8; margin: 10px 0; }
         .ticket__kind { margin: 0 0 6px; text-align: center; font-size: .72rem;
-                        text-transform: uppercase; letter-spacing: .12em; color: #5a656d; }
+                        text-transform: uppercase; letter-spacing: .12em; color: #64748b; }
         .ticket__amount { margin: 0; text-align: center; font-size: 2.2rem; font-weight: 800; }
         .rows { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: .84rem; }
-        .rows th { text-align: left; font-weight: 400; color: #5a656d; padding: 3px 0; }
+        .rows th { text-align: left; font-weight: 400; color: #64748b; padding: 3px 0; }
         .rows td { text-align: right; font-weight: 700; padding: 3px 0; }
         .actions button { min-height: 44px; padding: .55rem 1.1rem; font: inherit; font-weight: 600;
-                          border-radius: 8px; border: 1px solid #12314d; background: #12314d; color: #fff; cursor: pointer; }
+                          border-radius: 8px; border: 1px solid #2563eb; background: #2563eb; color: #fff; cursor: pointer; }
         @media print {
             body { background: #fff; padding: 0; display: block; }
             .actions { display: none !important; }

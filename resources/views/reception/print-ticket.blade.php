@@ -12,14 +12,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Ticket — {{ $hospitalName }}</title>
     <style>
-        :root { --encre: #10171c; --gris: #5a656d; }
+        :root { --encre: #1e293b; --gris: #64748b; }
 
         * { box-sizing: border-box; }
 
         body {
             margin: 0; padding: 12px;
             font-family: "DejaVu Sans", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
-            color: var(--encre); background: #eef3f8;
+            color: var(--encre); background: #f1f5f9;
             display: flex; flex-direction: column; align-items: center; gap: 14px;
         }
 
@@ -28,7 +28,7 @@
         .ticket {
             width: 100%; max-width: 44ch;
             background: #fff; padding: 14px 16px;
-            border: 1px solid #ccd4d9; border-radius: 6px;
+            border: 1px solid #cbd5e1; border-radius: 6px;
         }
 
         /* Le monogramme coiffe le ticket. Volontairement petit : sur un rouleau
@@ -37,7 +37,7 @@
         .ticket__hospital { margin: 0; font-size: 1rem; font-weight: 700; text-align: center; }
         .ticket__product { margin: 2px 0 10px; font-size: .72rem; text-align: center; color: var(--gris); }
 
-        .ticket__rule { border: 0; border-top: 1px dashed #9aa5ac; margin: 10px 0; }
+        .ticket__rule { border: 0; border-top: 1px dashed #94a3b8; margin: 10px 0; }
 
         .ticket__kind {
             margin: 0 0 6px; text-align: center; font-size: .72rem;
@@ -56,7 +56,7 @@
 
         .ticket__code {
             margin-top: 10px; padding: 8px; text-align: center;
-            border: 2px dashed #10171c; border-radius: 6px;
+            border: 2px dashed #1e293b; border-radius: 6px;
         }
         .ticket__code span { display: block; font-size: .68rem; text-transform: uppercase; letter-spacing: .1em; color: var(--gris); }
         .ticket__code strong { font-size: 1.6rem; letter-spacing: .35em; }
@@ -66,10 +66,10 @@
         .actions { display: flex; gap: 8px; }
         .actions button {
             min-height: 44px; padding: .55rem 1.1rem; font: inherit; font-weight: 600;
-            border-radius: 8px; border: 1px solid #12314d; cursor: pointer;
-            background: #12314d; color: #fff;
+            border-radius: 8px; border: 1px solid #2563eb; cursor: pointer;
+            background: #2563eb; color: #fff;
         }
-        .actions button.secondary { background: #fff; color: #12314d; }
+        .actions button.secondary { background: #fff; color: #1e3a8a; border-color: #cbd5e1; }
 
         @media print {
             /* Seul le ticket sort de l'imprimante. */

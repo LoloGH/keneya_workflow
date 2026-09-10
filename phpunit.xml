@@ -18,22 +18,45 @@
         </include>
     </source>
     <php>
-        <env name="APP_ENV" value="testing"/>
-        <env name="APP_MAINTENANCE_DRIVER" value="file"/>
-        <env name="BCRYPT_ROUNDS" value="4"/>
-        <env name="BROADCAST_CONNECTION" value="null"/>
-        <env name="CACHE_STORE" value="array"/>
-        <env name="DB_CONNECTION" value="sqlite"/>
-        <env name="DB_DATABASE" value=":memory:"/>
-        <env name="DB_URL" value=""/>
-        <env name="MAIL_MAILER" value="array"/>
-        <env name="QUEUE_CONNECTION" value="sync"/>
-        <env name="SESSION_DRIVER" value="array"/>
-        <env name="PULSE_ENABLED" value="false"/>
-        <env name="TELESCOPE_ENABLED" value="false"/>
-        <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <!--
+            `force="true"` sur chaque variable, et ce n'est pas cosmetique.
+
+            Sans lui, PHPUnit n'ecrase pas une variable d'environnement deja
+            definie. Or docker-compose injecte le fichier `.env` comme
+            variables d'environnement reelles du conteneur : `APP_ENV` y valait
+            donc `production` et `DB_CONNECTION` valait `mysql`, malgre les
+            lignes ci-dessous.
+
+            Deux consequences, l'une visible et l'autre non :
+
+              - la suite s'executait contre la base de developpement, et voyait
+                ses donnees — un test qui comptait trois entrees de journal en
+                trouvait sept ;
+              - `migrate:fresh`, que RefreshDatabase lance au premier test,
+                refuse de tourner en production et abandonnait en silence. Rien
+                n'etait donc migre, et c'est aussi, par chance, ce qui a
+                empeche la suite de vider la base de developpement.
+
+            Les deux se corrigent ensemble ou pas du tout : forcer `APP_ENV`
+            seul laisserait `migrate:fresh` s'executer sur la base de
+            developpement et en supprimerait toutes les tables.
+        -->
+        <env name="APP_ENV" value="testing" force="true"/>
+        <env name="APP_MAINTENANCE_DRIVER" value="file" force="true"/>
+        <env name="BCRYPT_ROUNDS" value="4" force="true"/>
+        <env name="BROADCAST_CONNECTION" value="null" force="true"/>
+        <env name="CACHE_STORE" value="array" force="true"/>
+        <env name="DB_CONNECTION" value="sqlite" force="true"/>
+        <env name="DB_DATABASE" value=":memory:" force="true"/>
+        <env name="DB_URL" value="" force="true"/>
+        <env name="MAIL_MAILER" value="array" force="true"/>
+        <env name="QUEUE_CONNECTION" value="sync" force="true"/>
+        <env name="SESSION_DRIVER" value="array" force="true"/>
+        <env name="PULSE_ENABLED" value="false" force="true"/>
+        <env name="TELESCOPE_ENABLED" value="false" force="true"/>
+        <env name="NIGHTWATCH_ENABLED" value="false" force="true"/>
         <!-- Aucun SMS ne part pendant les tests. -->
-        <env name="SMSGATE_ENABLED" value="false"/>
-        <env name="SMSGATE_URL" value=""/>
+        <env name="SMSGATE_ENABLED" value="false" force="true"/>
+        <env name="SMSGATE_URL" value="" force="true"/>
     </php>
 </phpunit>
