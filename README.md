@@ -1292,12 +1292,21 @@ image encore en cours de chargement ne part pas à l'imprimante. C'est la raison
 d'être de `PrescriptionPdfData` : le patient doit voir la même ordonnance que
 son médecin, quel que soit le rendu.
 
-> **La page pèse ce que pèsent les images.** Les dépôts sont plafonnés à 2 Mo
-> par image et ne sont pas redimensionnés : trois cachets lourds font une page
-> imprimable de plusieurs méga-octets. C'est acceptable pour un document qu'on
-> imprime puis qu'on ferme, moins sur un Wi-Fi d'hôpital chargé. Déposer des
-> images à la taille utile - une signature n'a pas besoin de 1700 px de large -
-> est le seul réglage disponible aujourd'hui.
+**Les images sont ramenées à la taille utile au dépôt (v3.3.1).**
+`StoreSignatureImage::COTE_MAX` borne le plus long côté à 1200 px. Un cachet
+fait cinq centimètres de large sur une ordonnance ; à 300 points par pouce cela
+fait six cents pixels, et 1200 laisse donc le double de ce que le papier peut
+rendre. Les proportions sont conservées - un cachet rond ne doit pas devenir
+ovale - la transparence aussi pour PNG et WebP, et **une image déjà assez petite
+n'est jamais agrandie** : agrandir un scan ne lui ajoute aucun détail.
+
+Une réduction qui échoue laisse passer l'original plutôt que de refuser le
+dépôt : c'est la même règle que partout ici - l'absence d'une signature ne doit
+jamais empêcher d'imprimer une ordonnance.
+
+> **Les images déjà déposées ne sont pas retouchées.** La règle vaut pour les
+> dépôts à venir. Un cachet versé avant la v3.3.1 garde sa taille jusqu'à ce
+> qu'on le redépose depuis l'administration ou la carte de profil.
 
 **`gd` est indispensable au PDF.** dompdf s'en sert pour toute image qu'il
 embarque, le logo de l'en-tête compris. Sans elle, la génération s'arrêtait sur
@@ -1536,6 +1545,40 @@ procédure de mise à jour.
 php artisan test                          # sans Docker
 docker compose exec app php artisan test  # avec Docker
 ```
+
+### La suite ne parle qu'à une base jetable (v3.3.1)
+
+**`tests/TestCase.php` impose SQLite en mémoire, en PHP, avant toute
+migration** - et refuse de démarrer si la base résolue est autre chose.
+
+Ce verrou n'est pas une précaution théorique. `phpunit.xml` demandait déjà
+SQLite sans jamais l'obtenir : `docker-compose.yml` injecte le fichier `.env`
+comme variables d'environnement réelles du conteneur, et **Laravel lit sa
+configuration depuis `$_SERVER`**, où docker a posé `DB_CONNECTION=mysql`. Les
+balises `<env>` de PHPUnit n'y changent rien, même avec `force="true"` : elles
+corrigent `getenv()`, pas ce que Laravel consulte.
+
+La suite tournait donc contre la base de développement. Deux conséquences,
+l'une agaçante et l'autre grave :
+
+- un test qui comptait trois entrées de journal en trouvait sept, parce qu'il
+  voyait celles de l'installation ;
+- `demo:reset` - que la suite exécute pour le vérifier - y a vidé les patients,
+  les passages et les ordonnances d'une installation de travail.
+
+Ce que le verrou impose, et pourquoi chaque ligne compte :
+
+| Réglage | Sans lui |
+|---|---|
+| `app.env` à `testing` | `migrate:fresh` refuse de tourner en production et abandonne **en silence** : aucune table n'est créée, chaque test échoue sur « no such table ». |
+| `database.default` à SQLite en mémoire | La suite écrit dans la base de l'hôpital. |
+| `queue.failed.database` | La file des échecs nomme sa connexion séparément : un travail échoué s'inscrivait dans `failed_jobs` de la base de développement. |
+| `session`, `cache`, `queue`, `mail` en mémoire | `.env` les règle tous sur `database` : sessions et travaux de test se déposaient dans la base réelle. |
+| `services.smsgate.url` à `.invalid` | `SMSGATE_URL` désigne le téléphone qui héberge la passerelle, sur le réseau de l'hôpital. Un test qui oublierait de simuler la couche HTTP enverrait de vrais SMS. |
+
+Les deux premiers vont ensemble et **jamais l'un sans l'autre** : forcer
+l'environnement seul autoriserait `migrate:fresh` à s'exécuter sur la base
+pointée par docker, et en supprimerait toutes les tables.
 
 **281 tests, 972 assertions.** La suite couvre :
 

@@ -96,6 +96,67 @@ class PrescriptionSignatureTest extends TestCase
             ->assertOk();
     }
 
+    // ----------------------------------------- Le poids des images deposees
+
+    /**
+     * Une image plus large que `COTE_MAX` est ramenee a cette taille.
+     *
+     * Ces trois images sont encodees dans la page imprimable : un cachet
+     * depose en 2000 pixels de large y pesait plus d'un mega-octet a lui seul.
+     * Les proportions sont conservees — un cachet rond ne doit pas devenir
+     * ovale.
+     */
+    public function test_une_image_trop_large_est_ramenee_a_la_taille_utile(): void
+    {
+        $medecin = $this->makeDoctor(Service::factory()->create());
+
+        app(StoreSignatureImage::class)->forDoctorStamp(
+            UploadedFile::fake()->image('tampon.png', 2400, 1200),
+            $medecin,
+        );
+
+        $chemin = $medecin->fresh()->stamp_path;
+        $mesures = getimagesizefromstring(Storage::disk('signatures')->get($chemin));
+
+        $this->assertSame(StoreSignatureImage::COTE_MAX, $mesures[0]);
+        $this->assertSame(StoreSignatureImage::COTE_MAX / 2, $mesures[1]);
+    }
+
+    /**
+     * Une image deja assez petite passe telle quelle : on ne la reencode pas,
+     * et surtout on ne l'agrandit jamais — agrandir un scan ne lui ajoute
+     * aucun detail, cela ne ferait que gonfler le fichier.
+     */
+    public function test_une_image_assez_petite_n_est_pas_touchee(): void
+    {
+        $medecin = $this->makeDoctor(Service::factory()->create());
+
+        app(StoreSignatureImage::class)->forDoctorSignature(
+            UploadedFile::fake()->image('signature.png', 400, 200),
+            $medecin,
+        );
+
+        $chemin = $medecin->fresh()->signature_path;
+        $mesures = getimagesizefromstring(Storage::disk('signatures')->get($chemin));
+
+        $this->assertSame(400, $mesures[0]);
+        $this->assertSame(200, $mesures[1]);
+    }
+
+    /** Le tampon de l'etablissement suit la meme regle. */
+    public function test_le_tampon_de_l_etablissement_est_reduit_aussi(): void
+    {
+        app(StoreSignatureImage::class)->forHospitalStamp(
+            UploadedFile::fake()->image('cachet.png', 3000, 3000),
+        );
+
+        $chemin = Setting::get(Setting::HOSPITAL_STAMP_PATH);
+        $mesures = getimagesizefromstring(Storage::disk('signatures')->get($chemin));
+
+        $this->assertSame(StoreSignatureImage::COTE_MAX, $mesures[0]);
+        $this->assertSame(StoreSignatureImage::COTE_MAX, $mesures[1]);
+    }
+
     // ------------------------------------- Les images arrivent sur le papier
 
     /**
